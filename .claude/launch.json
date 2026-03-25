@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "kanji-dev",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "start", "--tunnel"],
+      "port": 8081,
+      "autoPort": true
+    }
+  ]
+}

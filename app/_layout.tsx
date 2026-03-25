@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { initDatabase } from '../src/db/client';
 import { runMigrations } from '../src/db/migrate';
 import { seedDatabase } from '../src/db/seed';
 import { colors } from '../src/theme/colors';
@@ -22,10 +23,15 @@ export default function RootLayout() {
   useEffect(() => {
     async function init() {
       try {
+        console.log('[KanjiMaster] Initializing DB...');
+        await initDatabase();
+        console.log('[KanjiMaster] Starting migrations...');
         await runMigrations();
+        console.log('[KanjiMaster] Migrations done. Seeding...');
         await seedDatabase();
+        console.log('[KanjiMaster] Seed complete!');
       } catch (e) {
-        console.error('DB migration failed:', e);
+        console.error('[KanjiMaster] DB init failed:', e);
       } finally {
         setReady(true);
         SplashScreen.hideAsync();

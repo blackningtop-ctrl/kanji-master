@@ -14,27 +14,32 @@ export async function seedDatabase() {
     .from(schema.kanji);
 
   if (existing[0]?.count > 0) {
-    return; // 이미 시드됨
+    console.log('[Seed] Already seeded, skipping.');
+    return;
   }
 
-  // 부수 데이터 삽입
-  for (const r of RADICAL_DATA) {
-    await db.insert(schema.radicals).values({
-      id: r.id,
-      character: r.character,
-      meaning: r.meaning,
-      meaningEn: r.meaningEn,
-      strokeCount: r.strokeCount,
-      kangxiNumber: r.kangxiNumber,
-      nameJa: r.nameJa,
-      position: r.position,
-    });
+  console.log(`[Seed] Inserting ${RADICAL_DATA.length} radicals...`);
+  // 부수 데이터 — 한번에 삽입
+  if (RADICAL_DATA.length > 0) {
+    await db.insert(schema.radicals).values(
+      RADICAL_DATA.map((r) => ({
+        id: r.id,
+        character: r.character,
+        meaning: r.meaning,
+        meaningEn: r.meaningEn,
+        strokeCount: r.strokeCount,
+        kangxiNumber: r.kangxiNumber,
+        nameJa: r.nameJa,
+        position: r.position,
+      })),
+    );
   }
 
-  // 한자 데이터 삽입 (batch for performance)
-  const BATCH_SIZE = 50;
-  for (let i = 0; i < allKanjiData.length; i += BATCH_SIZE) {
-    const batch = allKanjiData.slice(i, i + BATCH_SIZE);
+  console.log(`[Seed] Inserting ${allKanjiData.length} kanji...`);
+  // 한자 데이터 — 100개씩 배치
+  const BATCH = 100;
+  for (let i = 0; i < allKanjiData.length; i += BATCH) {
+    const batch = allKanjiData.slice(i, i + BATCH);
     await db.insert(schema.kanji).values(
       batch.map((k) => ({
         id: k.id,
@@ -56,14 +61,16 @@ export async function seedDatabase() {
         antonymKanji: JSON.stringify(k.antonymKanji),
       })),
     );
+    console.log(`[Seed] Kanji ${i + batch.length}/${allKanjiData.length}`);
   }
 
-  // 어휘 데이터 삽입 (동적 임포트)
+  // 어휘 데이터
   try {
     const { VOCABULARY_DATA } = require('../data/vocabulary');
     if (VOCABULARY_DATA?.length > 0) {
-      for (let i = 0; i < VOCABULARY_DATA.length; i += BATCH_SIZE) {
-        const batch = VOCABULARY_DATA.slice(i, i + BATCH_SIZE);
+      console.log(`[Seed] Inserting ${VOCABULARY_DATA.length} vocabulary...`);
+      for (let i = 0; i < VOCABULARY_DATA.length; i += BATCH) {
+        const batch = VOCABULARY_DATA.slice(i, i + BATCH);
         await db.insert(schema.vocabulary).values(
           batch.map((v: any) => ({
             kanjiId: v.kanjiId,
@@ -80,14 +87,17 @@ export async function seedDatabase() {
         );
       }
     }
-  } catch {}
+  } catch (e) {
+    console.log('[Seed] Vocabulary data not available, skipping.');
+  }
 
-  // 니모닉 데이터 삽입 (동적 임포트)
+  // 니모닉 데이터
   try {
     const { MNEMONIC_DATA } = require('../data/mnemonics');
     if (MNEMONIC_DATA?.length > 0) {
-      for (let i = 0; i < MNEMONIC_DATA.length; i += BATCH_SIZE) {
-        const batch = MNEMONIC_DATA.slice(i, i + BATCH_SIZE);
+      console.log(`[Seed] Inserting ${MNEMONIC_DATA.length} mnemonics...`);
+      for (let i = 0; i < MNEMONIC_DATA.length; i += BATCH) {
+        const batch = MNEMONIC_DATA.slice(i, i + BATCH);
         await db.insert(schema.mnemonics).values(
           batch.map((m: any) => ({
             kanjiId: m.kanjiId,
@@ -99,9 +109,12 @@ export async function seedDatabase() {
         );
       }
     }
-  } catch {}
+  } catch (e) {
+    console.log('[Seed] Mnemonic data not available, skipping.');
+  }
 
   // 기본 유저 프로필 생성
+  console.log('[Seed] Creating user profile...');
   await db.insert(schema.userProfile).values({
     id: 1,
     name: '学習者',
@@ -114,4 +127,6 @@ export async function seedDatabase() {
     language: 'ko',
     createdAt: Date.now(),
   });
+
+  console.log('[Seed] Done!');
 }
