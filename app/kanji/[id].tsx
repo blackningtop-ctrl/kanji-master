@@ -10,9 +10,14 @@ import { Badge, SRSBadge } from '../../src/components/ui/Badge';
 import { Button } from '../../src/components/ui/Button';
 import { StrokeOrderViewer } from '../../src/components/kanji/StrokeOrderViewer';
 import { MnemonicCard } from '../../src/components/kanji/MnemonicCard';
+import * as Speech from 'expo-speech';
 import { db, schema } from '../../src/db/client';
 import { eq } from 'drizzle-orm';
 import { useStudyStore } from '../../src/stores/useStudyStore';
+
+function speakJapanese(text: string) {
+  Speech.speak(text, { language: 'ja-JP', rate: 0.8 });
+}
 
 interface KanjiDetail {
   id: number;
@@ -137,11 +142,15 @@ export default function KanjiDetailScreen() {
         <View style={styles.readingRow}>
           <View style={styles.readingBlock}>
             <Text style={styles.readingLabel}>音読み</Text>
-            <Text style={styles.readingValue}>{kanji.onReadings.join('・')}</Text>
+            <TouchableOpacity onPress={() => speakJapanese(kanji.onReadings[0] ?? kanji.character)}>
+              <Text style={styles.readingValue}>{kanji.onReadings.join('・')} 🔊</Text>
+            </TouchableOpacity>
           </View>
           <View style={styles.readingBlock}>
             <Text style={styles.readingLabel}>訓読み</Text>
-            <Text style={styles.readingValue}>{kanji.kunReadings.join('・')}</Text>
+            <TouchableOpacity onPress={() => speakJapanese(kanji.kunReadings[0]?.replace(/-/g, '') ?? kanji.character)}>
+              <Text style={styles.readingValue}>{kanji.kunReadings.join('・')} 🔊</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Card>

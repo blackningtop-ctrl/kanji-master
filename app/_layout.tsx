@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { useFonts, NotoSerifJP_400Regular, NotoSerifJP_700Bold } from '@expo-google-fonts/noto-serif-jp';
+import { NotoSansJP_400Regular, NotoSansJP_600SemiBold, NotoSansJP_700Bold } from '@expo-google-fonts/noto-sans-jp';
 import { initDatabase } from '../src/db/client';
 import { runMigrations } from '../src/db/migrate';
 import { seedDatabase } from '../src/db/seed';
+import { requestNotificationPermissions, scheduleReviewReminder } from '../src/services/notifications';
 import { colors } from '../src/theme/colors';
 import 'react-native-reanimated';
 
@@ -19,6 +22,15 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+
+  const [fontsLoaded] = useFonts({
+    NotoSerifJP: NotoSerifJP_400Regular,
+    'NotoSerifJP-Bold': NotoSerifJP_700Bold,
+    NotoSansJP: NotoSansJP_400Regular,
+    'NotoSansJP-SemiBold': NotoSansJP_600SemiBold,
+    'NotoSansJP-Bold': NotoSansJP_700Bold,
+  });
 
   useEffect(() => {
     async function init() {
@@ -30,6 +42,24 @@ export default function RootLayout() {
         console.log('[KanjiMaster] Migrations done. Seeding...');
         await seedDatabase();
         console.log('[KanjiMaster] Seed complete!');
+
+        // Check if onboarding needed
+        const { db, schema } = require('../src/db/client');
+        try {
+          const profiles = await db.select().from(schema.userProfile).limit(1);
+          if (profiles.length === 0 || !profiles[0].lastStudyDate) {
+            setNeedsOnboarding(true);
+          }
+        } catch {
+          setNeedsOnboarding(true);
+        }
+
+        // Request notification permissions (non-blocking)
+        requestNotificationPermissions().then((granted) => {
+          if (granted) {
+            scheduleReviewReminder(9, 0);
+          }
+        });
       } catch (e) {
         console.error('[KanjiMaster] DB init failed:', e);
       } finally {
@@ -40,7 +70,7 @@ export default function RootLayout() {
     init();
   }, []);
 
-  if (!ready) {
+  if (!ready || !fontsLoaded) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -86,6 +116,10 @@ export default function RootLayout() {
         <Stack.Screen
           name="radical"
           options={{ title: '部首', presentation: 'card' }}
+        />
+        <Stack.Screen
+          name="settings"
+          options={{ title: '設定', presentation: 'card' }}
         />
       </Stack>
     </>
