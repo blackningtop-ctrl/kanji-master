@@ -226,8 +226,8 @@ export default function QuizScreen() {
         {currentQuestion.options?.map((option, i) => {
           const isSelected = selectedAnswer === option;
           const isAnswer = option === currentQuestion.correctAnswer;
-          let bgColor = colors.surface;
-          let borderColor = colors.border;
+          let bgColor: string = colors.surface;
+          let borderColor: string = colors.border;
 
           if (selectedAnswer !== null) {
             if (isAnswer) {

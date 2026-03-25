@@ -11,8 +11,9 @@ interface Point {
   y: number;
 }
 
-interface WritingCanvasProps {
-  targetKanji: string;
+export interface WritingCanvasProps {
+  targetKanji?: string;
+  targetCharacter?: string;
   mode: WritingMode;
   size?: number;
   onStrokeComplete?: (paths: string[]) => void;
