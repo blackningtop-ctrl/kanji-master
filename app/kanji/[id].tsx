@@ -8,6 +8,8 @@ import { KanjiText } from '../../src/components/ui/KanjiText';
 import { Card } from '../../src/components/ui/Card';
 import { Badge, SRSBadge } from '../../src/components/ui/Badge';
 import { Button } from '../../src/components/ui/Button';
+import { StrokeOrderViewer } from '../../src/components/kanji/StrokeOrderViewer';
+import { MnemonicCard } from '../../src/components/kanji/MnemonicCard';
 import { db, schema } from '../../src/db/client';
 import { eq } from 'drizzle-orm';
 import { useStudyStore } from '../../src/stores/useStudyStore';
@@ -17,6 +19,7 @@ interface KanjiDetail {
   character: string;
   grade: number;
   strokeCount: number;
+  radicalId: number;
   meaningsJa: string[];
   meaningsKo: string[];
   meaningsEn: string[];
@@ -40,6 +43,8 @@ export default function KanjiDetailScreen() {
   const [kanji, setKanji] = useState<KanjiDetail | null>(null);
   const [vocab, setVocab] = useState<VocabItem[]>([]);
   const [mnemonic, setMnemonic] = useState<string>('');
+  const [strokePaths, setStrokePaths] = useState<string[]>([]);
+  const [radicalChar, setRadicalChar] = useState<string>('');
 
   useEffect(() => {
     if (!id) return;
@@ -56,6 +61,7 @@ export default function KanjiDetailScreen() {
       character: row.character,
       grade: row.grade,
       strokeCount: row.strokeCount,
+      radicalId: row.radicalId,
       meaningsJa: JSON.parse(row.meaningsJa),
       meaningsKo: JSON.parse(row.meaningsKo),
       meaningsEn: JSON.parse(row.meaningsEn),
@@ -64,6 +70,24 @@ export default function KanjiDetailScreen() {
       jlptLevel: row.jlptLevel,
       kankenLevel: row.kankenLevel,
     });
+
+    // 필순 데이터 로드
+    const strokeRows = await db
+      .select()
+      .from(schema.strokeData)
+      .where(eq(schema.strokeData.kanjiId, kanjiId));
+    if (strokeRows.length > 0) {
+      setStrokePaths(JSON.parse(strokeRows[0].paths));
+    }
+
+    // 부수 로드
+    const radicalRows = await db
+      .select()
+      .from(schema.radicals)
+      .where(eq(schema.radicals.id, row.radicalId));
+    if (radicalRows.length > 0) {
+      setRadicalChar(radicalRows[0].character);
+    }
 
     // 어휘 로드
     const vocabRows = await db
@@ -130,13 +154,31 @@ export default function KanjiDetailScreen() {
         <Text style={styles.meaningText}>🇬🇧 {kanji.meaningsEn.join(', ')}</Text>
       </Card>
 
-      {/* 니모닉 */}
-      {mnemonic ? (
+      {/* 필순 애니메이션 */}
+      {strokePaths.length > 0 && (
         <Card>
-          <Text style={styles.sectionTitle}>覚え方</Text>
-          <Text style={styles.mnemonicText}>{mnemonic}</Text>
+          <Text style={styles.sectionTitle}>筆順</Text>
+          <View style={{ alignItems: 'center' }}>
+            <StrokeOrderViewer paths={strokePaths} size={240} />
+          </View>
         </Card>
+      )}
+
+      {/* 부수 분해 */}
+      {radicalChar ? (
+        <TouchableOpacity onPress={() => router.push(`/radical?kanjiId=${kanji.id}`)}>
+          <Card style={styles.radicalCard}>
+            <Text style={styles.sectionTitle}>部首</Text>
+            <View style={styles.radicalRow}>
+              <Text style={styles.radicalChar}>{radicalChar}</Text>
+              <Text style={styles.radicalHint}>タップして部首の詳細を見る →</Text>
+            </View>
+          </Card>
+        </TouchableOpacity>
       ) : null}
+
+      {/* 니모닉 */}
+      <MnemonicCard kanjiId={kanji.id} character={kanji.character} />
 
       {/* 어휘 */}
       {vocab.length > 0 && (
@@ -228,6 +270,21 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.text,
     lineHeight: 26,
+  },
+  radicalCard: {},
+  radicalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  radicalChar: {
+    fontFamily: 'NotoSerifJP',
+    fontSize: 40,
+    color: colors.secondary,
+  },
+  radicalHint: {
+    ...typography.bodySmall,
+    color: colors.primary,
   },
   vocabItem: {
     paddingVertical: spacing.sm,

@@ -61,6 +61,26 @@ export default function RootLayout() {
           name="review"
           options={{ title: '復習', presentation: 'fullScreenModal' }}
         />
+        <Stack.Screen
+          name="quiz"
+          options={{ title: 'クイズ', presentation: 'fullScreenModal', headerShown: false }}
+        />
+        <Stack.Screen
+          name="write-quiz"
+          options={{ title: '書き取り', presentation: 'fullScreenModal', headerShown: false }}
+        />
+        <Stack.Screen
+          name="onboarding"
+          options={{ title: '初期設定', presentation: 'fullScreenModal', headerShown: false }}
+        />
+        <Stack.Screen
+          name="collection"
+          options={{ title: '漢字図鑑', presentation: 'card' }}
+        />
+        <Stack.Screen
+          name="radical"
+          options={{ title: '部首', presentation: 'card' }}
+        />
       </Stack>
     </>
   );
