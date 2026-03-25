@@ -38,9 +38,9 @@ export default function CollectionScreen() {
       .select({ kanjiId: schema.srsCards.kanjiId, state: schema.srsCards.state })
       .from(schema.srsCards);
 
-    const srsMap = new Map(srsRows.map((r) => [r.kanjiId, r.state]));
+    const srsMap = new Map(srsRows.map((r: any) => [r.kanjiId, r.state]));
 
-    const list: CollectionKanji[] = kanjiRows.map((k) => ({
+    const list: CollectionKanji[] = kanjiRows.map((k: any) => ({
       id: k.id,
       character: k.character,
       state: (srsMap.get(k.id) as CollectionKanji['state']) ?? 'locked',

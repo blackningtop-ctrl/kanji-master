@@ -42,7 +42,7 @@ export function MnemonicCard({ kanjiId, character }: MnemonicCardProps) {
       .from(schema.mnemonics)
       .where(eq(schema.mnemonics.kanjiId, kanjiId));
 
-    setMnemonics(rows.map((r) => ({
+    setMnemonics(rows.map((r: any) => ({
       id: r.id,
       language: r.language,
       story: r.story,
@@ -50,7 +50,7 @@ export function MnemonicCard({ kanjiId, character }: MnemonicCardProps) {
     })));
 
     // Check for custom mnemonic
-    const custom = rows.find((r) => !r.isDefault);
+    const custom = rows.find((r: any) => !r.isDefault);
     if (custom) {
       setHasCustom(true);
       setCustomText(custom.story);

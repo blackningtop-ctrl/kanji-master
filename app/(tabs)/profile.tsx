@@ -49,7 +49,7 @@ export default function ProfileScreen() {
         .orderBy(desc(sql`sum(case when ${schema.reviewHistory.correct} = 0 then 1 else 0 end)`))
         .limit(20);
 
-      setWeakKanji(weakRows.map((r) => ({
+      setWeakKanji(weakRows.map((r: any) => ({
         character: r.character,
         kanjiId: r.kanjiId,
         errorCount: r.errorCount,

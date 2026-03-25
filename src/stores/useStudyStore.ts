@@ -43,7 +43,7 @@ export const useStudyStore = create<StudyState>((set, get) => ({
         .where(lte(schema.srsCards.nextReviewAt, now))
         .limit(50);
 
-      const cards: SRSCard[] = rows.map((r) => ({
+      const cards: SRSCard[] = rows.map((r: any) => ({
         id: r.id,
         kanjiId: r.kanjiId,
         state: r.state as SRSCard['state'],

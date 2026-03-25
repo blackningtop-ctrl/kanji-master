@@ -213,7 +213,7 @@ export async function genRadicalMatch(kanjiIds: number[], count = 10): Promise<Q
 
     const options = shuffle([
       `${correctRadical.character}（${correctRadical.meaning}）`,
-      ...otherRadicals.map((r) => `${r.character}（${r.meaning}）`),
+      ...otherRadicals.map((r: any) => `${r.character}（${r.meaning}）`),
     ]);
 
     questions.push({

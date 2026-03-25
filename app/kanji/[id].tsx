@@ -94,7 +94,7 @@ export default function KanjiDetailScreen() {
       .select()
       .from(schema.vocabulary)
       .where(eq(schema.vocabulary.kanjiId, kanjiId));
-    setVocab(vocabRows.map((v) => ({
+    setVocab(vocabRows.map((v: any) => ({
       word: v.word,
       reading: v.reading,
       meaning: v.meaning,
