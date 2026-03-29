@@ -12,6 +12,7 @@ import { genReadingToWrite, genMeaningToWrite } from '../src/engine/quizAll';
 import { useGameStore } from '../src/stores/useGameStore';
 import { XP_REWARDS } from '../src/types/gamification';
 import { db, schema } from '../src/db/client';
+import * as Haptics from 'expo-haptics';
 
 export default function WriteQuizScreen() {
   const { type = 'reading-to-write', kanjiIds: idsParam } = useLocalSearchParams<{
@@ -51,6 +52,15 @@ export default function WriteQuizScreen() {
   async function handleNext(score: number) {
     const newScores = [...scores, score];
     setScores(newScores);
+
+    // Haptic feedback based on score
+    if (score >= 80) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } else if (score >= 60) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    }
 
     // Save writing score + review history to DB
     const q = currentQ;

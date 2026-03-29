@@ -70,6 +70,17 @@ export default function RootLayout() {
     init();
   }, []);
 
+  const router = useRouter();
+  const segments = useSegments();
+
+  useEffect(() => {
+    if (!ready) return;
+    const onOnboardingScreen = segments[0] === 'onboarding';
+    if (needsOnboarding && !onOnboardingScreen) {
+      router.replace('/onboarding');
+    }
+  }, [ready, needsOnboarding, segments]);
+
   if (!ready || !fontsLoaded) {
     return (
       <View style={styles.loading}>

@@ -8,9 +8,11 @@ import { Card } from '../src/components/ui/Card';
 import { db, schema } from '../src/db/client';
 import { eq } from 'drizzle-orm';
 import { scheduleReviewReminder, cancelReviewReminders } from '../src/services/notifications';
+import { useThemeStore, ThemeMode } from '../src/stores/useThemeStore';
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const { mode: themeMode, setMode: setThemeMode } = useThemeStore();
   const [dailyGoal, setDailyGoal] = useState(10);
   const [dailyNewLimit, setDailyNewLimit] = useState(5);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -148,6 +150,22 @@ export default function SettingsScreen() {
             </View>
           </>
         )}
+      </Card>
+
+      {/* Theme */}
+      <Card>
+        <Text style={styles.sectionTitle}>テーマ</Text>
+        <View style={styles.optionRow}>
+          {([['light', 'ライト'], ['dark', 'ダーク'], ['system', 'システム']] as const).map(([m, label]) => (
+            <TouchableOpacity
+              key={m}
+              style={[styles.chip, themeMode === m && styles.chipActive]}
+              onPress={() => setThemeMode(m)}
+            >
+              <Text style={[styles.chipText, themeMode === m && styles.chipTextActive]}>{label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </Card>
 
       {/* About */}

@@ -14,6 +14,7 @@ import { useStudyStore } from '../src/stores/useStudyStore';
 import { useGameStore } from '../src/stores/useGameStore';
 import { XP_REWARDS } from '../src/types/gamification';
 import * as Speech from 'expo-speech';
+import * as Haptics from 'expo-haptics';
 import { db, schema } from '../src/db/client';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -84,6 +85,12 @@ export default function QuizScreen() {
     setSelectedAnswer(answer);
     setIsCorrect(correct);
     setAnswers([...answers, { correct, timeMs }]);
+
+    if (correct) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
 
     if (!correct) {
       Animated.sequence([
