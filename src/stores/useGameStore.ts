@@ -90,7 +90,78 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   checkBadges: async () => {
     const newlyUnlocked: Badge[] = [];
-    // This is a simplified check; a full implementation would query more data
+
+    // Load already unlocked badges
+    const existing = await db.select().from(schema.unlockedBadges);
+    const unlockedIds = new Set(existing.map((b: { badgeId: string }) => b.badgeId));
+
+    // Gather stats for condition checks
+    const masteredByGrade: Record<number, number> = {};
+    for (let g = 1; g <= 6; g++) {
+      const rows = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(schema.srsCards)
+        .innerJoin(schema.kanji, eq(schema.srsCards.kanjiId, schema.kanji.id))
+        .where(and(eq(schema.kanji.grade, g), eq(schema.srsCards.state, 'mastered')));
+      masteredByGrade[g] = rows[0]?.count ?? 0;
+    }
+    const totalMastered = Object.values(masteredByGrade).reduce((a, b) => a + b, 0);
+
+    const gradeTotal: Record<number, number> = { 1: 80, 2: 160, 3: 200, 4: 202, 5: 193, 6: 191 };
+
+    const { streakDays } = get();
+
+    // Review stats for accuracy & speed
+    const reviewStats = await db
+      .select({
+        total: sql<number>`count(*)`,
+        correct: sql<number>`sum(case when ${schema.reviewHistory.correct} = 1 then 1 else 0 end)`,
+        avgTime: sql<number>`avg(${schema.reviewHistory.responseTimeMs})`,
+      })
+      .from(schema.reviewHistory);
+    const totalReviews = reviewStats[0]?.total ?? 0;
+    const totalCorrect = reviewStats[0]?.correct ?? 0;
+    const avgTimeMs = reviewStats[0]?.avgTime ?? 9999;
+    const accuracy = totalReviews > 0 ? Math.round((totalCorrect / totalReviews) * 100) : 0;
+
+    for (const badge of ALL_BADGES) {
+      if (unlockedIds.has(badge.id)) continue;
+
+      let met = false;
+      const c = badge.condition;
+      switch (c.type) {
+        case 'grade_master':
+          met = masteredByGrade[c.grade] >= (gradeTotal[c.grade] ?? 999);
+          break;
+        case 'streak':
+          met = streakDays >= c.days;
+          break;
+        case 'total_mastered':
+          met = totalMastered >= c.count;
+          break;
+        case 'quiz_accuracy':
+          met = totalReviews >= c.minQuizzes && accuracy >= c.percent;
+          break;
+        case 'speed_king':
+          met = totalReviews >= c.minQuizzes && avgTimeMs <= c.avgMs;
+          break;
+      }
+
+      if (met) {
+        const now = Date.now();
+        await db.insert(schema.unlockedBadges).values({ badgeId: badge.id, unlockedAt: now });
+        newlyUnlocked.push({ ...badge, unlockedAt: now });
+      }
+    }
+
+    // Reload all unlocked badges
+    const allUnlocked = await db.select().from(schema.unlockedBadges);
+    const badges: Badge[] = ALL_BADGES.map((b) => {
+      const found = allUnlocked.find((u: { badgeId: string; unlockedAt: number }) => u.badgeId === b.id);
+      return { ...b, unlockedAt: found?.unlockedAt ?? null };
+    }).filter((b) => b.unlockedAt !== null);
+
+    set({ badges });
     return newlyUnlocked;
   },
 

@@ -104,6 +104,25 @@ export const userProfile = sqliteTable('user_profile', {
   createdAt: integer('created_at').notNull(),
 });
 
+// ─── 획득 배지 ───
+export const unlockedBadges = sqliteTable('unlocked_badges', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  badgeId: text('badge_id').notNull().unique(),
+  unlockedAt: integer('unlocked_at').notNull(),
+});
+
+// ─── 쓰기 점수 기록 ───
+export const writingScores = sqliteTable('writing_scores', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  kanjiId: integer('kanji_id').notNull(),
+  score: integer('score').notNull(),
+  strokeOrder: integer('stroke_order').notNull(),
+  formAccuracy: integer('form_accuracy').notNull(),
+  balance: integer('balance').notNull(),
+  grade: text('grade').notNull(),
+  scoredAt: integer('scored_at').notNull(),
+});
+
 // ─── 일별 학습 통계 ───
 export const dailyStats = sqliteTable('daily_stats', {
   id: integer('id').primaryKey({ autoIncrement: true }),

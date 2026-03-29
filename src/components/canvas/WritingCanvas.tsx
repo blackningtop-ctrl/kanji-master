@@ -1,14 +1,22 @@
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { View, Text, StyleSheet, PanResponder, Dimensions } from 'react-native';
 import Svg, { Path, Line, Rect } from 'react-native-svg';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
+import { calculateWritingScore, WritingScore, UserStroke, StrokePoint } from '../../engine/writingScore';
 
 type WritingMode = 'guide' | 'hint' | 'free';
 
 interface Point {
   x: number;
   y: number;
+  t: number;
+}
+
+export interface WritingCanvasRef {
+  clear: () => void;
+  getScore: (expectedStrokeCount: number) => WritingScore;
+  getStrokeCount: () => number;
 }
 
 export interface WritingCanvasProps {
@@ -16,23 +24,43 @@ export interface WritingCanvasProps {
   targetCharacter?: string;
   mode: WritingMode;
   size?: number;
-  onStrokeComplete?: (paths: string[]) => void;
+  onStrokeComplete?: (strokeCount: number, paths: string[]) => void;
+  onScoreUpdate?: (score: WritingScore) => void;
+  expectedStrokeCount?: number;
   onClear?: () => void;
 }
 
-export function WritingCanvas({
+export const WritingCanvas = forwardRef<WritingCanvasRef, WritingCanvasProps>(function WritingCanvas({
   targetKanji,
   targetCharacter,
   mode,
   size: propSize,
   onStrokeComplete,
-}: WritingCanvasProps) {
+  onScoreUpdate,
+  expectedStrokeCount,
+}, ref) {
   const screenWidth = Dimensions.get('window').width;
   const size = propSize ?? screenWidth - spacing.lg * 2;
   const displayChar = targetCharacter ?? targetKanji;
 
   const [strokes, setStrokes] = useState<string[]>([]);
   const currentPoints = useRef<Point[]>([]);
+  const allUserStrokes = useRef<UserStroke[]>([]);
+
+  const getScore = useCallback((strokeCount: number): WritingScore => {
+    return calculateWritingScore(allUserStrokes.current, strokeCount, size);
+  }, [size]);
+
+  const clear = useCallback(() => {
+    setStrokes([]);
+    allUserStrokes.current = [];
+  }, []);
+
+  useImperativeHandle(ref, () => ({
+    clear,
+    getScore,
+    getStrokeCount: () => allUserStrokes.current.length,
+  }), [clear, getScore]);
 
   const panResponder = useRef(
     PanResponder.create({
@@ -40,11 +68,11 @@ export function WritingCanvas({
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: (evt) => {
         const { locationX, locationY } = evt.nativeEvent;
-        currentPoints.current = [{ x: locationX, y: locationY }];
+        currentPoints.current = [{ x: locationX, y: locationY, t: Date.now() }];
       },
       onPanResponderMove: (evt) => {
         const { locationX, locationY } = evt.nativeEvent;
-        currentPoints.current.push({ x: locationX, y: locationY });
+        currentPoints.current.push({ x: locationX, y: locationY, t: Date.now() });
         const path = pointsToSvgPath(currentPoints.current);
         setStrokes((prev) => {
           const updated = [...prev];
@@ -58,6 +86,11 @@ export function WritingCanvas({
       },
       onPanResponderRelease: () => {
         const path = pointsToSvgPath(currentPoints.current);
+        const userStroke: UserStroke = {
+          points: currentPoints.current.map(p => ({ x: p.x, y: p.y, timestamp: p.t })),
+        };
+        allUserStrokes.current.push(userStroke);
+
         setStrokes((prev) => {
           const updated = [...prev];
           if (updated.length > 0) {
@@ -66,17 +99,17 @@ export function WritingCanvas({
           return updated;
         });
         currentPoints.current = [];
-        onStrokeComplete?.([...strokes, path]);
+
+        const allPaths = [...strokes, path];
+        onStrokeComplete?.(allUserStrokes.current.length, allPaths);
+
+        if (expectedStrokeCount && onScoreUpdate) {
+          const score = calculateWritingScore(allUserStrokes.current, expectedStrokeCount, size);
+          onScoreUpdate(score);
+        }
       },
     })
   ).current;
-
-  const clear = useCallback(() => {
-    setStrokes([]);
-  }, []);
-
-  // Expose clear via ref-like pattern
-  (WritingCanvas as any)._lastClear = clear;
 
   return (
     <View style={[styles.container, { width: size, height: size }]}>
@@ -128,10 +161,7 @@ export function WritingCanvas({
       )}
     </View>
   );
-}
-
-/** Expose a way to get the clear function */
-WritingCanvas.getClear = () => (WritingCanvas as any)._lastClear;
+});
 
 function pointsToSvgPath(points: Point[]): string {
   if (points.length === 0) return '';

@@ -131,6 +131,27 @@ export async function runMigrations() {
     )
   `);
 
+  await db.run(sql`
+    CREATE TABLE IF NOT EXISTS unlocked_badges (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      badge_id TEXT NOT NULL UNIQUE,
+      unlocked_at INTEGER NOT NULL
+    )
+  `);
+
+  await db.run(sql`
+    CREATE TABLE IF NOT EXISTS writing_scores (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      kanji_id INTEGER NOT NULL,
+      score INTEGER NOT NULL,
+      stroke_order INTEGER NOT NULL,
+      form_accuracy INTEGER NOT NULL,
+      balance INTEGER NOT NULL,
+      grade TEXT NOT NULL,
+      scored_at INTEGER NOT NULL
+    )
+  `);
+
   // 인덱스
   await db.run(sql`CREATE INDEX IF NOT EXISTS idx_kanji_grade ON kanji(grade)`);
   await db.run(sql`CREATE INDEX IF NOT EXISTS idx_vocabulary_kanji ON vocabulary(kanji_id)`);
@@ -139,4 +160,5 @@ export async function runMigrations() {
   await db.run(sql`CREATE INDEX IF NOT EXISTS idx_srs_cards_next_review ON srs_cards(next_review_at)`);
   await db.run(sql`CREATE INDEX IF NOT EXISTS idx_review_history_kanji ON review_history(kanji_id)`);
   await db.run(sql`CREATE INDEX IF NOT EXISTS idx_daily_stats_date ON daily_stats(date)`);
+  await db.run(sql`CREATE INDEX IF NOT EXISTS idx_writing_scores_kanji ON writing_scores(kanji_id)`);
 }

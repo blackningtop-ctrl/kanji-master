@@ -50,7 +50,10 @@ export default function ChallengeScreen() {
     const gradeInfo = GRADE_INFO[selectedGrade - 1];
     const startId = GRADE_INFO.slice(0, selectedGrade - 1).reduce((sum, g) => sum + g.count, 0) + 1;
     const ids = Array.from({ length: gradeInfo.count }, (_, i) => startId + i);
-    router.push(`/quiz?type=kanji-to-reading&kanjiIds=${JSON.stringify(ids)}`);
+    // Boss battle rotates through reading quiz types
+    const bossTypes: QuizType[] = ['kanji-to-reading', 'kanji-to-meaning', 'compound-reading', 'radical-match'];
+    const randomType = bossTypes[Math.floor(Math.random() * bossTypes.length)];
+    router.push(`/quiz?type=${randomType}&kanjiIds=${JSON.stringify(ids)}`);
   }
 
   return (

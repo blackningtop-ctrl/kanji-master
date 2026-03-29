@@ -20,7 +20,7 @@ interface WeakKanji {
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { level, totalXp, streakDays, loadProfile, getCollectionStats } = useGameStore();
+  const { level, totalXp, streakDays, badges, loadProfile, getCollectionStats, checkBadges } = useGameStore();
   const [collectionStats, setCollectionStats] = useState<{ grade: number; total: number; mastered: number }[]>([]);
   const [weakKanji, setWeakKanji] = useState<WeakKanji[]>([]);
   const [totalReviews, setTotalReviews] = useState(0);
@@ -29,6 +29,7 @@ export default function ProfileScreen() {
   useEffect(() => {
     loadProfile();
     loadData();
+    checkBadges();
   }, []);
 
   async function loadData() {
@@ -130,8 +131,8 @@ export default function ProfileScreen() {
       <Card>
         <Text style={styles.sectionTitle}>バッジ</Text>
         <View style={styles.badgeGrid}>
-          {ALL_BADGES.slice(0, 12).map((badge) => {
-            const unlocked = checkBadgeUnlocked(badge.id, totalMastered, streakDays);
+          {ALL_BADGES.map((badge) => {
+            const unlocked = badges.some((b) => b.id === badge.id);
             return (
               <View key={badge.id} style={[styles.badgeItem, !unlocked && styles.badgeLocked]}>
                 <Text style={styles.badgeIcon}>{badge.icon}</Text>
@@ -166,7 +167,7 @@ export default function ProfileScreen() {
         <TouchableOpacity style={styles.settingRow} onPress={() => router.push('/radical')}>
           <Text style={styles.settingLabel}>📚 部首一覧</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.settingRow, { borderBottomWidth: 0 }]}>
+        <TouchableOpacity style={[styles.settingRow, { borderBottomWidth: 0 }]} onPress={() => router.push('/settings')}>
           <Text style={styles.settingLabel}>⚙️ 設定</Text>
         </TouchableOpacity>
       </Card>
@@ -184,13 +185,6 @@ function QuickStat({ label, value, emoji }: { label: string; value: string; emoj
   );
 }
 
-function checkBadgeUnlocked(id: string, mastered: number, streak: number): boolean {
-  if (id === 'streak_7' && streak >= 7) return true;
-  if (id === 'streak_30' && streak >= 30) return true;
-  if (id === 'master_100' && mastered >= 100) return true;
-  if (id === 'master_500' && mastered >= 500) return true;
-  return false;
-}
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },

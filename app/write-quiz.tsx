@@ -11,6 +11,7 @@ import { QuizQuestion } from '../src/types/quiz';
 import { genReadingToWrite, genMeaningToWrite } from '../src/engine/quizAll';
 import { useGameStore } from '../src/stores/useGameStore';
 import { XP_REWARDS } from '../src/types/gamification';
+import { db, schema } from '../src/db/client';
 
 export default function WriteQuizScreen() {
   const { type = 'reading-to-write', kanjiIds: idsParam } = useLocalSearchParams<{
@@ -50,6 +51,29 @@ export default function WriteQuizScreen() {
   async function handleNext(score: number) {
     const newScores = [...scores, score];
     setScores(newScores);
+
+    // Save writing score + review history to DB
+    const q = currentQ;
+    if (q) {
+      try {
+        await db.insert(schema.writingScores).values({
+          kanjiId: q.kanjiId,
+          score,
+          strokeOrder: score,
+          formAccuracy: score,
+          balance: score,
+          grade: score >= 80 ? 'excellent' : score >= 60 ? 'good' : 'fair',
+          scoredAt: Date.now(),
+        });
+        await db.insert(schema.reviewHistory).values({
+          kanjiId: q.kanjiId,
+          quizType: type as string,
+          correct: score >= 60 ? 1 : 0,
+          responseTimeMs: 0,
+          reviewedAt: Date.now(),
+        });
+      } catch {}
+    }
 
     if (currentIndex + 1 >= questions.length) {
       const avgScore = Math.round(newScores.reduce((a, b) => a + b, 0) / newScores.length);

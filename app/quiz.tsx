@@ -9,9 +9,12 @@ import { Button } from '../src/components/ui/Button';
 import { ProgressBar } from '../src/components/ui/ProgressBar';
 import { QuizQuestion, QuizResult, QuizType } from '../src/types/quiz';
 import { generateReadingQuiz, generateMeaningQuiz } from '../src/engine/quiz';
+import { generateQuizByType } from '../src/engine/quizAll';
 import { useStudyStore } from '../src/stores/useStudyStore';
 import { useGameStore } from '../src/stores/useGameStore';
 import { XP_REWARDS } from '../src/types/gamification';
+import * as Speech from 'expo-speech';
+import { db, schema } from '../src/db/client';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -43,13 +46,7 @@ export default function QuizScreen() {
   async function loadQuiz() {
     setIsLoading(true);
     const ids = kanjiIdsParam ? JSON.parse(kanjiIdsParam) : Array.from({ length: 80 }, (_, i) => i + 1);
-    let qs: QuizQuestion[] = [];
-
-    if (type === 'kanji-to-meaning') {
-      qs = await generateMeaningQuiz(ids, 10);
-    } else {
-      qs = await generateReadingQuiz(ids, 10);
-    }
+    const qs = await generateQuizByType(type as QuizType, ids, 10);
 
     setQuestions(qs);
     setStartTime(Date.now());
@@ -63,6 +60,20 @@ export default function QuizScreen() {
 
   const currentQuestion = questions[currentIndex];
   const progress = questions.length > 0 ? (currentIndex + 1) / questions.length : 0;
+  const isAudioQuiz = type === 'audio-to-kanji';
+
+  function playAudio() {
+    if (currentQuestion?.audioText) {
+      Speech.speak(currentQuestion.audioText, { language: 'ja-JP', rate: 0.8 });
+    }
+  }
+
+  // Auto-play audio for audio quiz
+  useEffect(() => {
+    if (isAudioQuiz && currentQuestion?.audioText && !isLoading) {
+      playAudio();
+    }
+  }, [currentIndex, isLoading]);
 
   function handleAnswer(answer: string) {
     if (selectedAnswer !== null) return; // prevent double tap
@@ -89,13 +100,28 @@ export default function QuizScreen() {
 
   async function nextQuestion() {
     if (currentIndex + 1 >= questions.length) {
-      // Quiz finished
       const allAnswers = [...answers];
       const correctCount = allAnswers.filter((a) => a.correct).length;
       const totalTime = allAnswers.reduce((sum, a) => sum + a.timeMs, 0);
       const accuracy = Math.round((correctCount / allAnswers.length) * 100);
       const xp = correctCount * XP_REWARDS.quizCorrect +
         (accuracy === 100 ? XP_REWARDS.quizPerfect : 0);
+
+      // Save each answer to review history
+      try {
+        for (let i = 0; i < allAnswers.length; i++) {
+          const q = questions[i];
+          if (q) {
+            await db.insert(schema.reviewHistory).values({
+              kanjiId: q.kanjiId,
+              quizType: type as string,
+              correct: allAnswers[i].correct ? 1 : 0,
+              responseTimeMs: allAnswers[i].timeMs,
+              reviewedAt: Date.now(),
+            });
+          }
+        }
+      } catch {}
 
       const quizResult: QuizResult = {
         totalQuestions: allAnswers.length,
@@ -215,10 +241,15 @@ export default function QuizScreen() {
           { opacity: fadeAnim, transform: [{ scale: scaleAnim }, { translateX: shakeAnim }] },
         ]}
       >
-        <Text style={styles.questionLabel}>
-          {type === 'kanji-to-meaning' ? 'この漢字の意味は？' : 'この漢字の読みは？'}
-        </Text>
-        <Text style={styles.kanjiPrompt}>{currentQuestion.prompt}</Text>
+        <Text style={styles.questionLabel}>{getQuestionLabel(type as QuizType)}</Text>
+        {isAudioQuiz ? (
+          <TouchableOpacity onPress={playAudio} style={styles.audioButton}>
+            <Text style={styles.audioIcon}>🔊</Text>
+            <Text style={styles.audioHint}>タップして聞く</Text>
+          </TouchableOpacity>
+        ) : (
+          <Text style={styles.kanjiPrompt}>{currentQuestion.prompt}</Text>
+        )}
       </Animated.View>
 
       {/* Options */}
@@ -274,6 +305,20 @@ export default function QuizScreen() {
   );
 }
 
+function getQuestionLabel(quizType: QuizType): string {
+  switch (quizType) {
+    case 'kanji-to-reading': return 'この漢字の読みは？';
+    case 'kanji-to-meaning': return 'この漢字の意味は？';
+    case 'compound-reading': return 'この熟語の読みは？';
+    case 'audio-to-kanji': return '聞こえた漢字はどれ？';
+    case 'radical-match': return 'この漢字の部首は？';
+    case 'stroke-count': return 'この漢字の画数は？';
+    case 'antonym-synonym': return '反対語・類義語を選べ';
+    case 'sentence-completion': return '正しい漢字を選べ';
+    default: return 'この漢字の読みは？';
+  }
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -323,6 +368,24 @@ const styles = StyleSheet.create({
     fontSize: 96,
     color: colors.text,
     lineHeight: 120,
+  },
+  audioButton: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: colors.primary + '15',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: colors.primary,
+  },
+  audioIcon: {
+    fontSize: 48,
+  },
+  audioHint: {
+    ...typography.caption,
+    color: colors.primary,
+    marginTop: spacing.xs,
   },
   optionsContainer: {
     paddingHorizontal: spacing.lg,
