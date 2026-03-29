@@ -113,6 +113,28 @@ export async function seedDatabase() {
     console.log('[Seed] Mnemonic data not available, skipping.');
   }
 
+  // 필순 SVG 데이터
+  try {
+    const { STROKE_DATA } = require('../data/strokes');
+    if (STROKE_DATA?.length > 0) {
+      console.log(`[Seed] Inserting ${STROKE_DATA.length} stroke data entries...`);
+      for (let i = 0; i < STROKE_DATA.length; i += BATCH) {
+        const batch = STROKE_DATA.slice(i, i + BATCH);
+        await db.insert(schema.strokeData).values(
+          batch.map((s: any) => ({
+            kanjiId: s.kanjiId,
+            paths: JSON.stringify(s.paths),
+            strokeTypes: JSON.stringify([]),
+            viewBox: s.viewBox,
+          })),
+        );
+      }
+      console.log(`[Seed] Stroke data: ${STROKE_DATA.length} entries.`);
+    }
+  } catch (e) {
+    console.log('[Seed] Stroke data not available, skipping.');
+  }
+
   // 기본 유저 프로필 생성
   console.log('[Seed] Creating user profile...');
   await db.insert(schema.userProfile).values({
