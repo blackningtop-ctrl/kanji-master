@@ -122,7 +122,7 @@ export default function QuizScreen() {
             await db.insert(schema.reviewHistory).values({
               kanjiId: q.kanjiId,
               quizType: type as string,
-              correct: allAnswers[i].correct ? 1 : 0,
+              correct: allAnswers[i].correct,
               responseTimeMs: allAnswers[i].timeMs,
               reviewedAt: Date.now(),
             });

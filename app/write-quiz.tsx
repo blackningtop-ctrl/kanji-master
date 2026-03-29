@@ -78,7 +78,7 @@ export default function WriteQuizScreen() {
         await db.insert(schema.reviewHistory).values({
           kanjiId: q.kanjiId,
           quizType: type as string,
-          correct: score >= 60 ? 1 : 0,
+          correct: score >= 60,
           responseTimeMs: 0,
           reviewedAt: Date.now(),
         });
