@@ -435,6 +435,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: spacing.xl,
+    paddingBottom: 48,
     alignItems: 'center',
   },
   feedbackText: {

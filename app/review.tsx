@@ -199,7 +199,9 @@ const styles = StyleSheet.create({
   },
   gradeButtons: {
     flexDirection: 'row',
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: 48,
     gap: spacing.sm,
   },
   gradeButton: {

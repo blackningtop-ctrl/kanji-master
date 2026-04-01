@@ -43,7 +43,8 @@
       "Bash(\"$LOCALAPPDATA/Android/Sdk/emulator/emulator\" -list-avds)",
       "Bash(node -e \":*)",
       "Bash(grep -n \"useNavigation\\\\|navigation.setOptions\" app/kanji/[id].tsx app/review.tsx app/collection.tsx app/radical.tsx app/settings.tsx)",
-      "Bash(grep -n \"^import.*useRouter\" app/kanji/[id].tsx app/review.tsx app/collection.tsx app/radical.tsx app/settings.tsx)"
+      "Bash(grep -n \"^import.*useRouter\" app/kanji/[id].tsx app/review.tsx app/collection.tsx app/radical.tsx app/settings.tsx)",
+      "Bash(grep -rn \"bottomActions\\\\|feedback.*bottom\\\\|actions.*padding.*bottom\" C:UserskonggDesktopkanjiapp --include=*.tsx)"
     ]
   }
 }

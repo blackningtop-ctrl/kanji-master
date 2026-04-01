@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
     flex: 1, marginHorizontal: spacing.lg,
     borderRadius: radius.lg, overflow: 'hidden',
   },
-  actions: { padding: spacing.lg, gap: spacing.md },
+  actions: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: 48, gap: spacing.md },
   scoreButtons: { flexDirection: 'row', gap: spacing.sm },
   scoreBtn: {
     flex: 1, paddingVertical: spacing.md, borderRadius: radius.md, alignItems: 'center',

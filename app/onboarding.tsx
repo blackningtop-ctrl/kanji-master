@@ -12,6 +12,7 @@ import { db, schema } from '../src/db/client';
 import { eq } from 'drizzle-orm';
 import { useI18n } from '../src/i18n';
 import { onboardingDone } from '../src/stores/onboardingFlag';
+import { useBottomInset } from '../src/hooks/useBottomInset';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -22,6 +23,7 @@ type Step = 'slides' | 'name' | 'purpose' | 'level' | 'goal' | 'ready';
 export default function OnboardingScreen() {
   const router = useRouter();
   const { t } = useI18n();
+  const bottomInset = useBottomInset();
 
   const SLIDES = [
     {
@@ -284,7 +286,7 @@ const styles = StyleSheet.create({
   // Steps
   stepContent: { flex: 1, padding: spacing.xl, paddingTop: spacing.xxxl },
   stepTitle: { ...typography.h1, color: colors.text, marginBottom: spacing.xl },
-  bottomActions: { padding: spacing.xl, gap: spacing.md },
+  bottomActions: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: 48, gap: spacing.md },
   skipText: { ...typography.body, color: colors.textSecondary, textAlign: 'center' },
   // Name
   nameInput: {
