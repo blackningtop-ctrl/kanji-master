@@ -22,7 +22,7 @@ interface WeakKanji {
 export default function ProfileScreen() {
   const router = useRouter();
   const { level, totalXp, streakDays, badges, loadProfile, getCollectionStats, checkBadges } = useGameStore();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const [collectionStats, setCollectionStats] = useState<{ grade: number; total: number; mastered: number }[]>([]);
   const [weakKanji, setWeakKanji] = useState<WeakKanji[]>([]);
   const [totalReviews, setTotalReviews] = useState(0);
@@ -138,7 +138,7 @@ export default function ProfileScreen() {
             return (
               <View key={badge.id} style={[styles.badgeItem, !unlocked && styles.badgeLocked]}>
                 <Text style={styles.badgeIcon}>{badge.icon}</Text>
-                <Text style={styles.badgeName} numberOfLines={1}>{badge.nameJa}</Text>
+                <Text style={styles.badgeName} numberOfLines={1}>{language === 'ko' ? badge.nameKo : badge.nameJa}</Text>
               </View>
             );
           })}
