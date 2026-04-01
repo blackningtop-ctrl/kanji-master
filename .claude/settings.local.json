@@ -40,7 +40,8 @@
       "Bash(node scripts/fetch-strokes.mjs)",
       "Bash(npm uninstall:*)",
       "Bash(npx expo:*)",
-      "Bash(\"$LOCALAPPDATA/Android/Sdk/emulator/emulator\" -list-avds)"
+      "Bash(\"$LOCALAPPDATA/Android/Sdk/emulator/emulator\" -list-avds)",
+      "Bash(node -e \":*)"
     ]
   }
 }

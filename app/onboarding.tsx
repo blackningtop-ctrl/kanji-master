@@ -71,12 +71,14 @@ export default function OnboardingScreen() {
   const flatListRef = useRef<FlatList>(null);
 
   async function completeOnboarding() {
+    const today = new Date().toISOString().split('T')[0];
     await db
       .update(schema.userProfile)
       .set({
-        name: name || '学習者',
+        name: name || t('onboarding.namePlaceholder'),
         currentGrade: Math.max(1, level) as number,
         dailyGoalMinutes: goalMinutes,
+        lastStudyDate: today,
       })
       .where(eq(schema.userProfile.id, 1));
 
@@ -244,9 +246,9 @@ export default function OnboardingScreen() {
           {t('onboarding.welcome')}, {name || ''}
         </Text>
         <View style={styles.readySummary}>
-          <Text style={styles.summaryText}>📚 {level === 0 ? '1年生' : `${level}年生`}からスタート</Text>
-          <Text style={styles.summaryText}>⏱️ 1日{goalMinutes}分の学習</Text>
-          <Text style={styles.summaryText}>🎯 {purpose ? PURPOSES.find((p) => p.id === purpose)?.label : '自由学習'}</Text>
+          <Text style={styles.summaryText}>📚 {level === 0 ? 1 : level}{t('learn.grade')} start</Text>
+          <Text style={styles.summaryText}>⏱️ {goalMinutes}{t('settings.min')}</Text>
+          <Text style={styles.summaryText}>🎯 {purpose ? PURPOSES.find((p) => p.id === purpose)?.label : ''}</Text>
         </View>
       </View>
       <View style={styles.bottomActions}>

@@ -44,9 +44,9 @@ export default function RootLayout() {
         console.log('[KanjiMaster] Seed complete!');
 
         // Check if onboarding needed
-        const { db, schema } = require('../src/db/client');
         try {
-          const profiles = await db.select().from(schema.userProfile).limit(1);
+          const { db: database, schema: sch } = await import('../src/db/client');
+          const profiles = await database.select().from(sch.userProfile).limit(1);
           if (profiles.length === 0 || !profiles[0].lastStudyDate) {
             setNeedsOnboarding(true);
           }
