@@ -14,6 +14,7 @@ import * as Speech from 'expo-speech';
 import { db, schema } from '../../src/db/client';
 import { eq } from 'drizzle-orm';
 import { useStudyStore } from '../../src/stores/useStudyStore';
+import { useI18n } from '../../src/i18n';
 
 function speakJapanese(text: string) {
   Speech.speak(text, { language: 'ja-JP', rate: 0.8 });
@@ -45,6 +46,7 @@ export default function KanjiDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { addKanjiToStudy } = useStudyStore();
+  const { t } = useI18n();
   const [kanji, setKanji] = useState<KanjiDetail | null>(null);
   const [vocab, setVocab] = useState<VocabItem[]>([]);
   const [mnemonic, setMnemonic] = useState<string>('');
@@ -130,24 +132,24 @@ export default function KanjiDetailScreen() {
       <View style={styles.kanjiHeader}>
         <KanjiText size="huge">{kanji.character}</KanjiText>
         <View style={styles.badges}>
-          <Badge label={`${kanji.grade}年生`} color={colors.secondary} />
-          <Badge label={`${kanji.strokeCount}画`} color={colors.textSecondary} />
+          <Badge label={`${kanji.grade}${t('learn.grade')}`} color={colors.secondary} />
+          <Badge label={`${kanji.strokeCount}${t('kanji.strokes')}`} color={colors.textSecondary} />
           {kanji.jlptLevel && <Badge label={`N${kanji.jlptLevel}`} color={colors.info} />}
         </View>
       </View>
 
       {/* 읽기 */}
       <Card>
-        <Text style={styles.sectionTitle}>読み方</Text>
+        <Text style={styles.sectionTitle}>{t('kanji.readings')}</Text>
         <View style={styles.readingRow}>
           <View style={styles.readingBlock}>
-            <Text style={styles.readingLabel}>音読み</Text>
+            <Text style={styles.readingLabel}>{t('kanji.onyomi')}</Text>
             <TouchableOpacity onPress={() => speakJapanese(kanji.onReadings[0] ?? kanji.character)}>
               <Text style={styles.readingValue}>{kanji.onReadings.join('・')} 🔊</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.readingBlock}>
-            <Text style={styles.readingLabel}>訓読み</Text>
+            <Text style={styles.readingLabel}>{t('kanji.kunyomi')}</Text>
             <TouchableOpacity onPress={() => speakJapanese(kanji.kunReadings[0]?.replace(/-/g, '') ?? kanji.character)}>
               <Text style={styles.readingValue}>{kanji.kunReadings.join('・')} 🔊</Text>
             </TouchableOpacity>
@@ -157,7 +159,7 @@ export default function KanjiDetailScreen() {
 
       {/* 의미 */}
       <Card>
-        <Text style={styles.sectionTitle}>意味</Text>
+        <Text style={styles.sectionTitle}>{t('kanji.meanings')}</Text>
         <Text style={styles.meaningText}>🇯🇵 {kanji.meaningsJa.join('、')}</Text>
         <Text style={styles.meaningText}>🇰🇷 {kanji.meaningsKo.join(', ')}</Text>
         <Text style={styles.meaningText}>🇬🇧 {kanji.meaningsEn.join(', ')}</Text>
@@ -166,7 +168,7 @@ export default function KanjiDetailScreen() {
       {/* 필순 애니메이션 */}
       {strokePaths.length > 0 && (
         <Card>
-          <Text style={styles.sectionTitle}>筆順</Text>
+          <Text style={styles.sectionTitle}>{t('kanji.strokeOrder')}</Text>
           <View style={{ alignItems: 'center' }}>
             <StrokeOrderViewer paths={strokePaths} size={240} />
           </View>
@@ -177,7 +179,7 @@ export default function KanjiDetailScreen() {
       {radicalChar ? (
         <TouchableOpacity onPress={() => router.push(`/radical?kanjiId=${kanji.id}`)}>
           <Card style={styles.radicalCard}>
-            <Text style={styles.sectionTitle}>部首</Text>
+            <Text style={styles.sectionTitle}>{t('kanji.radical')}</Text>
             <View style={styles.radicalRow}>
               <Text style={styles.radicalChar}>{radicalChar}</Text>
               <Text style={styles.radicalHint}>タップして部首の詳細を見る →</Text>
@@ -192,7 +194,7 @@ export default function KanjiDetailScreen() {
       {/* 어휘 */}
       {vocab.length > 0 && (
         <Card>
-          <Text style={styles.sectionTitle}>熟語・単語</Text>
+          <Text style={styles.sectionTitle}>{t('kanji.vocabulary')}</Text>
           {vocab.map((v, i) => (
             <View key={i} style={styles.vocabItem}>
               <View style={styles.vocabHeader}>
@@ -210,7 +212,7 @@ export default function KanjiDetailScreen() {
 
       {/* 학습 시작 버튼 */}
       <Button
-        title="学習を始める"
+        title={t('kanji.startLearn')}
         onPress={async () => {
           await addKanjiToStudy(kanji.id);
           router.back();

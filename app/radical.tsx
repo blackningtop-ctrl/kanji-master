@@ -10,6 +10,7 @@ import { Card } from '../src/components/ui/Card';
 import { KanjiText } from '../src/components/ui/KanjiText';
 import { db, schema } from '../src/db/client';
 import { eq, sql } from 'drizzle-orm';
+import { useI18n } from '../src/i18n';
 
 interface RadicalInfo {
   id: number;
@@ -25,6 +26,7 @@ interface RadicalInfo {
 export default function RadicalScreen() {
   const { kanjiId } = useLocalSearchParams<{ kanjiId?: string }>();
   const router = useRouter();
+  const { t } = useI18n();
   const [radical, setRadical] = useState<RadicalInfo | null>(null);
   const [allRadicals, setAllRadicals] = useState<{ id: number; character: string; meaning: string; count: number }[]>([]);
   const [mode, setMode] = useState<'detail' | 'browse'>(kanjiId ? 'detail' : 'browse');
@@ -89,7 +91,7 @@ export default function RadicalScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>部首一覧</Text>
+          <Text style={styles.title}>{t('radical.title')}</Text>
           <Text style={styles.subtitle}>214部首</Text>
         </View>
         <FlatList
@@ -107,7 +109,7 @@ export default function RadicalScreen() {
             >
               <Text style={styles.radicalChar}>{item.character}</Text>
               <Text style={styles.radicalMeaning} numberOfLines={1}>{item.meaning}</Text>
-              <Text style={styles.radicalCount}>{item.count}字</Text>
+              <Text style={styles.radicalCount}>{item.count}{t('home.chars')}</Text>
             </TouchableOpacity>
           )}
         />
@@ -169,14 +171,14 @@ export default function RadicalScreen() {
             : `この部首「${radical.character}」は${radical.meaning}に関する意味を持ちます。`}
         </Text>
         <TouchableOpacity style={styles.animButton} onPress={playDecomposeAnimation}>
-          <Text style={styles.animButtonText}>タップで分解アニメーション</Text>
+          <Text style={styles.animButtonText}>{t('radical.animation')}</Text>
         </TouchableOpacity>
       </Card>
 
       {/* Related kanji */}
       <Card>
         <Text style={styles.sectionTitle}>
-          この部首を含む漢字 ({radical.kanjiList.length}字)
+          {t('radical.relatedKanji')} ({radical.kanjiList.length}{t('home.chars')})
         </Text>
         <View style={styles.kanjiFlow}>
           {radical.kanjiList.map((k) => (
@@ -197,7 +199,7 @@ export default function RadicalScreen() {
           style={styles.backButton}
           onPress={() => { setMode('browse'); setRadical(null); }}
         >
-          <Text style={styles.backButtonText}>部首一覧に戻る</Text>
+          <Text style={styles.backButtonText}>{t('radical.title')}</Text>
         </TouchableOpacity>
       )}
     </ScrollView>

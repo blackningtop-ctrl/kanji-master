@@ -9,10 +9,12 @@ import { ProgressBar } from '../../src/components/ui/ProgressBar';
 import { Button } from '../../src/components/ui/Button';
 import { useStudyStore } from '../../src/stores/useStudyStore';
 import { GRADE_INFO } from '../../src/types/kanji';
+import { useI18n } from '../../src/i18n';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { stats, streakDays, loadStats, loadDueCards } = useStudyStore();
+  const { t } = useI18n();
 
   useEffect(() => {
     loadStats();
@@ -25,7 +27,7 @@ export default function HomeScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* 스트릭 & 인사 */}
       <View style={styles.header}>
-        <Text style={styles.greeting}>漢字マスター</Text>
+        <Text style={styles.greeting}>{t('home.title')}</Text>
         <View style={styles.streakBadge}>
           <Text style={styles.streakEmoji}>🔥</Text>
           <Text style={styles.streakCount}>{streakDays}</Text>
@@ -34,14 +36,14 @@ export default function HomeScreen() {
 
       {/* 오늘의 학습 현황 */}
       <Card style={styles.todayCard}>
-        <Text style={styles.cardTitle}>今日の学習</Text>
+        <Text style={styles.cardTitle}>{t('home.todayStudy')}</Text>
         <View style={styles.statsRow}>
-          <StatBlock label="復習待ち" value={stats.dueCount} color={colors.primary} />
-          <StatBlock label="学習中" value={stats.learningCount} color={colors.srsLearning} />
-          <StatBlock label="マスター" value={stats.masteredCount} color={colors.srsMastered} />
+          <StatBlock label={t('home.dueCards')} value={stats.dueCount} color={colors.primary} />
+          <StatBlock label={t('learn.studying')} value={stats.learningCount} color={colors.srsLearning} />
+          <StatBlock label={t('home.mastered')} value={stats.masteredCount} color={colors.srsMastered} />
         </View>
         <Button
-          title={stats.dueCount > 0 ? `復習を始める (${stats.dueCount})` : '新しい漢字を学ぶ'}
+          title={stats.dueCount > 0 ? `${t('home.startReview')} (${stats.dueCount})` : t('home.startLearn')}
           onPress={() => {
             if (stats.dueCount > 0) {
               loadDueCards();
@@ -56,19 +58,19 @@ export default function HomeScreen() {
 
       {/* 전체 진도 */}
       <Card style={styles.progressCard}>
-        <Text style={styles.cardTitle}>全体の進捗</Text>
+        <Text style={styles.cardTitle}>{t('home.gradeProgress')}</Text>
         <ProgressBar
           progress={masteredRatio}
           color={colors.accent}
           showLabel
-          label={`${stats.masteredCount} / ${totalKanji || 1026} 字`}
+          label={`${stats.masteredCount} / ${totalKanji || 1026} ${t('home.chars')}`}
           style={styles.progressBar}
         />
       </Card>
 
       {/* 학년별 진도 */}
       <Card>
-        <Text style={styles.cardTitle}>学年別</Text>
+        <Text style={styles.cardTitle}>{t('home.gradeProgress')}</Text>
         {GRADE_INFO.map((g) => (
           <TouchableOpacity
             key={g.grade}

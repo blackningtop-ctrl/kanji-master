@@ -9,10 +9,12 @@ import { db, schema } from '../src/db/client';
 import { eq } from 'drizzle-orm';
 import { scheduleReviewReminder, cancelReviewReminders } from '../src/services/notifications';
 import { useThemeStore, ThemeMode } from '../src/stores/useThemeStore';
+import { useI18n, AppLanguage } from '../src/i18n';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { mode: themeMode, setMode: setThemeMode } = useThemeStore();
+  const { t, language, setLanguage } = useI18n();
   const [dailyGoal, setDailyGoal] = useState(10);
   const [dailyNewLimit, setDailyNewLimit] = useState(5);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -32,7 +34,7 @@ export default function SettingsScreen() {
     } catch {}
   }
 
-  async function updateSetting(field: string, value: number) {
+  async function updateSetting(field: string, value: number | string) {
     try {
       await db.update(schema.userProfile).set({ [field]: value }).where(eq(schema.userProfile.id, 1));
     } catch {}
@@ -59,12 +61,12 @@ export default function SettingsScreen() {
 
   function handleResetData() {
     Alert.alert(
-      'データリセット',
-      '学習データをすべて削除しますか？この操作は元に戻せません。',
+      t('settings.resetTitle'),
+      t('settings.resetMessage'),
       [
-        { text: 'キャンセル', style: 'cancel' },
+        { text: t('settings.cancel'), style: 'cancel' },
         {
-          text: '削除',
+          text: t('settings.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -74,7 +76,7 @@ export default function SettingsScreen() {
               await db.update(schema.userProfile).set({
                 xp: 0, level: 1, streakDays: 0, lastStudyDate: null,
               }).where(eq(schema.userProfile.id, 1));
-              Alert.alert('完了', 'データがリセットされました。');
+              Alert.alert(t('settings.resetDone'), t('settings.resetDoneMsg'));
             } catch {}
           },
         },
@@ -90,7 +92,7 @@ export default function SettingsScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Daily goal */}
       <Card>
-        <Text style={styles.sectionTitle}>1日の学習目標</Text>
+        <Text style={styles.sectionTitle}>{t('settings.dailyGoal')}</Text>
         <View style={styles.optionRow}>
           {GOAL_OPTIONS.map((m) => (
             <TouchableOpacity
@@ -98,7 +100,7 @@ export default function SettingsScreen() {
               style={[styles.chip, dailyGoal === m && styles.chipActive]}
               onPress={() => handleGoalChange(m)}
             >
-              <Text style={[styles.chipText, dailyGoal === m && styles.chipTextActive]}>{m}分</Text>
+              <Text style={[styles.chipText, dailyGoal === m && styles.chipTextActive]}>{m}{t('settings.min')}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -106,7 +108,7 @@ export default function SettingsScreen() {
 
       {/* New kanji per day */}
       <Card>
-        <Text style={styles.sectionTitle}>1日の新規漢字数</Text>
+        <Text style={styles.sectionTitle}>{t('settings.newLimit')}</Text>
         <View style={styles.optionRow}>
           {NEW_LIMIT_OPTIONS.map((n) => (
             <TouchableOpacity
@@ -114,7 +116,7 @@ export default function SettingsScreen() {
               style={[styles.chip, dailyNewLimit === n && styles.chipActive]}
               onPress={() => handleNewLimitChange(n)}
             >
-              <Text style={[styles.chipText, dailyNewLimit === n && styles.chipTextActive]}>{n}字</Text>
+              <Text style={[styles.chipText, dailyNewLimit === n && styles.chipTextActive]}>{n}{t('settings.chars')}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -122,9 +124,9 @@ export default function SettingsScreen() {
 
       {/* Notifications */}
       <Card>
-        <Text style={styles.sectionTitle}>通知</Text>
+        <Text style={styles.sectionTitle}>{t('settings.notifications')}</Text>
         <View style={styles.switchRow}>
-          <Text style={styles.switchLabel}>復習リマインダー</Text>
+          <Text style={styles.switchLabel}>{t('settings.reviewReminder')}</Text>
           <Switch
             value={notificationsEnabled}
             onValueChange={handleNotificationToggle}
@@ -133,7 +135,7 @@ export default function SettingsScreen() {
         </View>
         {notificationsEnabled && (
           <>
-            <Text style={styles.subLabel}>通知時刻</Text>
+            <Text style={styles.subLabel}>{t('settings.notifTime')}</Text>
             <View style={styles.optionRow}>
               {HOUR_OPTIONS.map((h) => (
                 <TouchableOpacity
@@ -154,13 +156,13 @@ export default function SettingsScreen() {
 
       {/* Theme */}
       <Card>
-        <Text style={styles.sectionTitle}>テーマ</Text>
+        <Text style={styles.sectionTitle}>{t('settings.theme')}</Text>
         <View style={styles.optionRow}>
-          {([['light', 'ライト'], ['dark', 'ダーク'], ['system', 'システム']] as const).map(([m, label]) => (
+          {([['light', t('settings.light')], ['dark', t('settings.dark')], ['system', t('settings.system')]] as [string, string][]).map(([m, label]) => (
             <TouchableOpacity
               key={m}
               style={[styles.chip, themeMode === m && styles.chipActive]}
-              onPress={() => setThemeMode(m)}
+              onPress={() => setThemeMode(m as ThemeMode)}
             >
               <Text style={[styles.chipText, themeMode === m && styles.chipTextActive]}>{label}</Text>
             </TouchableOpacity>
@@ -168,17 +170,33 @@ export default function SettingsScreen() {
         </View>
       </Card>
 
+      {/* Language */}
+      <Card>
+        <Text style={styles.sectionTitle}>{t('settings.language')}</Text>
+        <View style={styles.optionRow}>
+          {[['ko', '한국어'], ['ja', '日本語']].map(([code, label]) => (
+            <TouchableOpacity
+              key={code}
+              style={[styles.chip, language === code && styles.chipActive]}
+              onPress={() => { setLanguage(code as AppLanguage); updateSetting('language', code === 'ko' ? 'ko' : 'ja'); }}
+            >
+              <Text style={[styles.chipText, language === code && styles.chipTextActive]}>{label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </Card>
+
       {/* About */}
       <Card>
-        <Text style={styles.sectionTitle}>アプリ情報</Text>
-        <Text style={styles.infoText}>漢字マスター v1.0.0</Text>
-        <Text style={styles.infoText}>教育漢字 1,026字対応</Text>
-        <Text style={styles.infoText}>2020年学習指導要領準拠</Text>
+        <Text style={styles.sectionTitle}>{t('settings.appInfo')}</Text>
+        <Text style={styles.infoText}>{t('settings.version')}</Text>
+        <Text style={styles.infoText}>{t('settings.kanjiCount')}</Text>
+        <Text style={styles.infoText}>{t('settings.curriculum')}</Text>
       </Card>
 
       {/* Reset */}
       <TouchableOpacity style={styles.resetButton} onPress={handleResetData}>
-        <Text style={styles.resetText}>学習データをリセット</Text>
+        <Text style={styles.resetText}>{t('settings.resetData')}</Text>
       </TouchableOpacity>
     </ScrollView>
   );

@@ -16,6 +16,7 @@ import { XP_REWARDS } from '../src/types/gamification';
 import * as Speech from 'expo-speech';
 import * as Haptics from 'expo-haptics';
 import { db, schema } from '../src/db/client';
+import { useI18n } from '../src/i18n';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -26,6 +27,7 @@ export default function QuizScreen() {
   }>();
   const router = useRouter();
   const { addXP } = useGameStore();
+  const { t } = useI18n();
 
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -152,7 +154,7 @@ export default function QuizScreen() {
   if (isLoading) {
     return (
       <View style={styles.center}>
-        <Text style={styles.loadingText}>問題を準備中...</Text>
+        <Text style={styles.loadingText}>{t('quiz.preparing')}</Text>
       </View>
     );
   }
@@ -160,8 +162,8 @@ export default function QuizScreen() {
   if (questions.length === 0) {
     return (
       <View style={styles.center}>
-        <Text style={styles.loadingText}>問題がありません</Text>
-        <Button title="戻る" onPress={() => router.back()} variant="outline" />
+        <Text style={styles.loadingText}>{t('quiz.noQuestions')}</Text>
+        <Button title={t('quiz.back')} onPress={() => router.back()} variant="outline" />
       </View>
     );
   }
@@ -174,29 +176,29 @@ export default function QuizScreen() {
           <Text style={styles.resultEmoji}>
             {result.accuracy >= 90 ? '🎉' : result.accuracy >= 70 ? '👍' : '💪'}
           </Text>
-          <Text style={styles.resultTitle}>結果発表</Text>
+          <Text style={styles.resultTitle}>{t('quiz.result')}</Text>
 
           <Card style={styles.resultCard}>
             <View style={styles.resultRow}>
-              <Text style={styles.resultLabel}>正解率</Text>
+              <Text style={styles.resultLabel}>{t('quiz.accuracy')}</Text>
               <Text style={[styles.resultValue, { color: result.accuracy >= 80 ? colors.success : colors.warning }]}>
                 {result.accuracy}%
               </Text>
             </View>
             <View style={styles.resultRow}>
-              <Text style={styles.resultLabel}>正解</Text>
+              <Text style={styles.resultLabel}>{t('quiz.correctCount')}</Text>
               <Text style={styles.resultValue}>
                 {result.correctCount} / {result.totalQuestions}
               </Text>
             </View>
             <View style={styles.resultRow}>
-              <Text style={styles.resultLabel}>平均時間</Text>
+              <Text style={styles.resultLabel}>{t('quiz.avgTime')}</Text>
               <Text style={styles.resultValue}>
-                {(result.averageTimeMs / 1000).toFixed(1)}秒
+                {(result.averageTimeMs / 1000).toFixed(1)}{t('quiz.sec')}
               </Text>
             </View>
             <View style={styles.resultRow}>
-              <Text style={styles.resultLabel}>獲得XP</Text>
+              <Text style={styles.resultLabel}>{t('quiz.xpEarned')}</Text>
               <Text style={[styles.resultValue, { color: colors.accent }]}>
                 +{result.xpEarned} XP
               </Text>
@@ -205,7 +207,7 @@ export default function QuizScreen() {
 
           <View style={styles.resultActions}>
             <Button
-              title="もう一度"
+              title={t('quiz.retry')}
               onPress={() => {
                 setResult(null);
                 setCurrentIndex(0);
@@ -215,7 +217,7 @@ export default function QuizScreen() {
                 loadQuiz();
               }}
             />
-            <Button title="ホームに戻る" variant="outline" onPress={() => router.push('/')} />
+            <Button title={t('quiz.goHome')} variant="outline" onPress={() => router.push('/')} />
           </View>
         </View>
       </View>
@@ -248,11 +250,11 @@ export default function QuizScreen() {
           { opacity: fadeAnim, transform: [{ scale: scaleAnim }, { translateX: shakeAnim }] },
         ]}
       >
-        <Text style={styles.questionLabel}>{getQuestionLabel(type as QuizType)}</Text>
+        <Text style={styles.questionLabel}>{getQuestionLabel(type as QuizType, t)}</Text>
         {isAudioQuiz ? (
           <TouchableOpacity onPress={playAudio} style={styles.audioButton}>
             <Text style={styles.audioIcon}>🔊</Text>
-            <Text style={styles.audioHint}>タップして聞く</Text>
+            <Text style={styles.audioHint}>{t('quiz.tapToListen')}</Text>
           </TouchableOpacity>
         ) : (
           <Text style={styles.kanjiPrompt}>{currentQuestion.prompt}</Text>
@@ -304,7 +306,7 @@ export default function QuizScreen() {
       {selectedAnswer !== null && (
         <View style={[styles.feedback, { backgroundColor: isCorrect ? '#DCFCE7' : '#FEE2E2' }]}>
           <Text style={[styles.feedbackText, { color: isCorrect ? colors.success : colors.error }]}>
-            {isCorrect ? '正解！' : `不正解… 正解は「${currentQuestion.correctAnswer}」`}
+            {isCorrect ? t('quiz.correct') : `${t('quiz.wrong')}「${currentQuestion.correctAnswer}」`}
           </Text>
         </View>
       )}
@@ -312,17 +314,17 @@ export default function QuizScreen() {
   );
 }
 
-function getQuestionLabel(quizType: QuizType): string {
+function getQuestionLabel(quizType: QuizType, t: (key: string) => string): string {
   switch (quizType) {
-    case 'kanji-to-reading': return 'この漢字の読みは？';
-    case 'kanji-to-meaning': return 'この漢字の意味は？';
-    case 'compound-reading': return 'この熟語の読みは？';
-    case 'audio-to-kanji': return '聞こえた漢字はどれ？';
-    case 'radical-match': return 'この漢字の部首は？';
-    case 'stroke-count': return 'この漢字の画数は？';
-    case 'antonym-synonym': return '反対語・類義語を選べ';
-    case 'sentence-completion': return '正しい漢字を選べ';
-    default: return 'この漢字の読みは？';
+    case 'kanji-to-reading': return t('quiz.kanjiReading');
+    case 'kanji-to-meaning': return t('quiz.kanjiMeaning');
+    case 'compound-reading': return t('quiz.compoundReading');
+    case 'audio-to-kanji': return t('quiz.audioKanji');
+    case 'radical-match': return t('quiz.radicalMatch');
+    case 'stroke-count': return t('quiz.strokeCount');
+    case 'antonym-synonym': return t('quiz.antonymSynonym');
+    case 'sentence-completion': return t('quiz.sentenceComplete');
+    default: return t('quiz.kanjiReading');
   }
 }
 

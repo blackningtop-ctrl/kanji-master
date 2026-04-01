@@ -13,17 +13,21 @@ import { previewIntervals } from '../src/engine/srs';
 import { ReviewGrade } from '../src/types/srs';
 import { db, schema } from '../src/db/client';
 import { eq } from 'drizzle-orm';
+import { useI18n } from '../src/i18n';
 
-const GRADE_BUTTONS: { grade: ReviewGrade; label: string; color: string }[] = [
-  { grade: 'again', label: 'もう一度', color: colors.error },
-  { grade: 'hard', label: '難しい', color: colors.warning },
-  { grade: 'good', label: '良い', color: colors.success },
-  { grade: 'easy', label: '簡単', color: colors.info },
-];
+// Grade button labels are now set dynamically with i18n in the component
 
 export default function ReviewScreen() {
   const router = useRouter();
   const { dueCards, currentCardIndex, answerCard, loadDueCards } = useStudyStore();
+  const { t } = useI18n();
+
+  const GRADE_BUTTONS: { grade: ReviewGrade; label: string; color: string }[] = [
+    { grade: 'again', label: t('review.again'), color: colors.error },
+    { grade: 'hard', label: t('review.hard'), color: colors.warning },
+    { grade: 'good', label: t('review.good'), color: colors.success },
+    { grade: 'easy', label: t('review.easy'), color: colors.info },
+  ];
   const [showAnswer, setShowAnswer] = useState(false);
   const [kanjiChar, setKanjiChar] = useState('');
   const [readings, setReadings] = useState({ on: '', kun: '' });
@@ -58,12 +62,12 @@ export default function ReviewScreen() {
     return (
       <View style={styles.complete}>
         <Text style={styles.completeEmoji}>🎉</Text>
-        <Text style={styles.completeTitle}>復習完了！</Text>
+        <Text style={styles.completeTitle}>{t('review.complete')}</Text>
         <Text style={styles.completeDesc}>
-          {totalCards}枚のカードを復習しました
+          {totalCards}{t('review.cardsReviewed')}
         </Text>
         <Button
-          title="ホームに戻る"
+          title={t('review.goHome')}
           onPress={() => router.back()}
           style={styles.homeButton}
         />
@@ -102,7 +106,7 @@ export default function ReviewScreen() {
               <Text style={styles.meaningText}>{meanings}</Text>
             </View>
           ) : (
-            <Text style={styles.tapHint}>タップして答えを見る</Text>
+            <Text style={styles.tapHint}>{t('review.tapToReveal')}</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -126,7 +130,7 @@ export default function ReviewScreen() {
       ) : (
         <View style={styles.gradeButtons}>
           <Button
-            title="答えを見る"
+            title={t('writeQuiz.showAnswer')}
             onPress={() => setShowAnswer(true)}
             size="lg"
           />

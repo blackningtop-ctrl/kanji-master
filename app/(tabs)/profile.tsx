@@ -11,6 +11,7 @@ import { ALL_BADGES } from '../../src/types/gamification';
 import { GRADE_INFO } from '../../src/types/kanji';
 import { db, schema } from '../../src/db/client';
 import { sql, eq, desc } from 'drizzle-orm';
+import { useI18n } from '../../src/i18n';
 
 interface WeakKanji {
   character: string;
@@ -21,6 +22,7 @@ interface WeakKanji {
 export default function ProfileScreen() {
   const router = useRouter();
   const { level, totalXp, streakDays, badges, loadProfile, getCollectionStats, checkBadges } = useGameStore();
+  const { t } = useI18n();
   const [collectionStats, setCollectionStats] = useState<{ grade: number; total: number; mastered: number }[]>([]);
   const [weakKanji, setWeakKanji] = useState<WeakKanji[]>([]);
   const [totalReviews, setTotalReviews] = useState(0);
@@ -98,18 +100,18 @@ export default function ProfileScreen() {
 
       {/* Quick stats */}
       <View style={styles.quickStats}>
-        <QuickStat label="連続学習" value={`${streakDays}日`} emoji="🔥" />
-        <QuickStat label="マスター" value={`${totalMastered}字`} emoji="⭐" />
-        <QuickStat label="正答率" value={`${accuracy}%`} emoji="🎯" />
-        <QuickStat label="復習回数" value={`${totalReviews}`} emoji="📊" />
+        <QuickStat label={t('profile.streak')} value={`${streakDays}${t('home.days')}`} emoji="🔥" />
+        <QuickStat label={t('profile.master')} value={`${totalMastered}${t('home.chars')}`} emoji="⭐" />
+        <QuickStat label={t('profile.accuracy')} value={`${accuracy}%`} emoji="🎯" />
+        <QuickStat label={t('profile.reviewCount')} value={`${totalReviews}`} emoji="📊" />
       </View>
 
       {/* Grade progress */}
       <Card>
-        <Text style={styles.sectionTitle}>学年別マスター</Text>
+        <Text style={styles.sectionTitle}>{t('profile.gradeMastery')}</Text>
         {collectionStats.map((s, i) => (
           <View key={s.grade} style={styles.gradeRow}>
-            <Text style={styles.gradeLabel}>{s.grade}年生</Text>
+            <Text style={styles.gradeLabel}>{s.grade}{t('learn.grade')}</Text>
             <ProgressBar
               progress={s.total > 0 ? s.mastered / s.total : 0}
               color={GRADE_INFO[i]?.color ?? colors.primary}
@@ -123,13 +125,13 @@ export default function ProfileScreen() {
           style={styles.collectionLink}
           onPress={() => router.push('/collection')}
         >
-          <Text style={styles.collectionLinkText}>漢字図鑑を見る →</Text>
+          <Text style={styles.collectionLinkText}>{t('profile.collection')}</Text>
         </TouchableOpacity>
       </Card>
 
       {/* Badges */}
       <Card>
-        <Text style={styles.sectionTitle}>バッジ</Text>
+        <Text style={styles.sectionTitle}>{t('profile.badges')}</Text>
         <View style={styles.badgeGrid}>
           {ALL_BADGES.map((badge) => {
             const unlocked = badges.some((b) => b.id === badge.id);
@@ -146,7 +148,7 @@ export default function ProfileScreen() {
       {/* Weak kanji */}
       {weakKanji.length > 0 && (
         <Card>
-          <Text style={styles.sectionTitle}>苦手な漢字 TOP 20</Text>
+          <Text style={styles.sectionTitle}>{t('profile.weakKanji')}</Text>
           <View style={styles.weakGrid}>
             {weakKanji.map((k) => (
               <TouchableOpacity
@@ -165,10 +167,10 @@ export default function ProfileScreen() {
       {/* Navigation links */}
       <Card>
         <TouchableOpacity style={styles.settingRow} onPress={() => router.push('/radical')}>
-          <Text style={styles.settingLabel}>📚 部首一覧</Text>
+          <Text style={styles.settingLabel}>📚 {t('profile.radicals')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.settingRow, { borderBottomWidth: 0 }]} onPress={() => router.push('/settings')}>
-          <Text style={styles.settingLabel}>⚙️ 設定</Text>
+          <Text style={styles.settingLabel}>⚙️ {t('profile.settings')}</Text>
         </TouchableOpacity>
       </Card>
     </ScrollView>

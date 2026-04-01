@@ -38,7 +38,9 @@
       "Bash(ls -la /c/Users/kongg/Desktop/kanji/*.md)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(node scripts/fetch-strokes.mjs)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(npx expo:*)",
+      "Bash(\"$LOCALAPPDATA/Android/Sdk/emulator/emulator\" -list-avds)"
     ]
   }
 }

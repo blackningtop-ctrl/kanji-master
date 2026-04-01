@@ -8,6 +8,7 @@ import { ProgressBar } from '../src/components/ui/ProgressBar';
 import { GRADE_INFO } from '../src/types/kanji';
 import { db, schema } from '../src/db/client';
 import { eq, and, sql } from 'drizzle-orm';
+import { useI18n } from '../src/i18n';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const CELL_SIZE = (SCREEN_W - spacing.lg * 2 - spacing.xs * 8) / 8;
@@ -23,6 +24,7 @@ export default function CollectionScreen() {
   const [selectedGrade, setSelectedGrade] = useState(1);
   const [kanjiList, setKanjiList] = useState<CollectionKanji[]>([]);
   const [stats, setStats] = useState({ total: 0, mastered: 0, learning: 0 });
+  const { t } = useI18n();
 
   useEffect(() => {
     loadCollection(selectedGrade);
@@ -65,9 +67,9 @@ export default function CollectionScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>漢字図鑑</Text>
+        <Text style={styles.title}>{t('collection.title')}</Text>
         <Text style={styles.subtitle}>
-          {stats.mastered}/{stats.total} マスター
+          {stats.mastered}/{stats.total} {t('collection.mastered')}
         </Text>
       </View>
 
@@ -80,7 +82,7 @@ export default function CollectionScreen() {
             onPress={() => setSelectedGrade(g.grade)}
           >
             <Text style={[styles.gradeTabText, selectedGrade === g.grade && { color: '#fff' }]}>
-              {g.grade}年
+              {g.grade}{t('learn.grade')}
             </Text>
           </TouchableOpacity>
         ))}
@@ -93,13 +95,13 @@ export default function CollectionScreen() {
           color={GRADE_INFO[selectedGrade - 1]?.color ?? colors.primary}
           height={8}
           showLabel
-          label={`${stats.learning}字 学習中 / ${stats.mastered}字 マスター`}
+          label={`${stats.learning}${t('home.chars')} ${t('collection.learning')} / ${stats.mastered}${t('home.chars')} ${t('collection.mastered')}`}
         />
         <View style={styles.legend}>
-          <LegendItem color={colors.border} label="未学習" />
-          <LegendItem color={colors.srsLearning} label="学習中" />
-          <LegendItem color={colors.srsReview} label="復習" />
-          <LegendItem color={colors.srsMastered} label="マスター" />
+          <LegendItem color={colors.border} label={t('collection.locked')} />
+          <LegendItem color={colors.srsLearning} label={t('collection.learning')} />
+          <LegendItem color={colors.srsReview} label={t('collection.review')} />
+          <LegendItem color={colors.srsMastered} label={t('collection.mastered')} />
         </View>
       </View>
 

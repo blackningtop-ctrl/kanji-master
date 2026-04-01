@@ -10,54 +10,58 @@ import { spacing, radius } from '../src/theme/spacing';
 import { Button } from '../src/components/ui/Button';
 import { db, schema } from '../src/db/client';
 import { eq } from 'drizzle-orm';
+import { useI18n } from '../src/i18n';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
-const SLIDES = [
-  {
-    emoji: '🇯🇵',
-    title: '漢字マスターへようこそ',
-    subtitle: '教育漢字1,026字を\n楽しくマスターしよう！',
-  },
-  {
-    emoji: '🧠',
-    title: '科学的な学習法',
-    subtitle: 'SRS（間隔反復）で\n効率よく長期記憶に定着',
-  },
-  {
-    emoji: '✏️',
-    title: '書いて覚える',
-    subtitle: '正しい筆順で\n書き取り練習ができます',
-  },
-];
-
-const PURPOSES = [
-  { id: 'school', label: '学校の授業', emoji: '🏫' },
-  { id: 'kanken', label: '漢字検定', emoji: '📝' },
-  { id: 'japanese', label: '日本語学習', emoji: '🌏' },
-  { id: 'hobby', label: '趣味', emoji: '🎌' },
-];
-
-const LEVELS = [
-  { id: 0, label: '完全初心者', desc: '漢字を全く知らない' },
-  { id: 1, label: '1年生レベル', desc: '簡単な漢字を少し知っている' },
-  { id: 2, label: '2年生レベル', desc: '基本的な漢字200字くらい' },
-  { id: 3, label: '3年生レベル', desc: '400字くらい読める' },
-  { id: 4, label: '4年生レベル', desc: '600字くらい知っている' },
-  { id: 5, label: '5年生以上', desc: 'かなり多くの漢字を知っている' },
-];
-
-const GOALS = [
-  { minutes: 5, label: '5分', desc: '軽く' },
-  { minutes: 10, label: '10分', desc: 'おすすめ' },
-  { minutes: 15, label: '15分', desc: 'しっかり' },
-  { minutes: 30, label: '30分', desc: '集中' },
-];
+// Slides, purposes, levels, and goals are now generated dynamically with i18n in the component
 
 type Step = 'slides' | 'name' | 'purpose' | 'level' | 'goal' | 'ready';
 
 export default function OnboardingScreen() {
   const router = useRouter();
+  const { t } = useI18n();
+
+  const SLIDES = [
+    {
+      emoji: '🇯🇵',
+      title: t('onboarding.slide1Title'),
+      subtitle: t('onboarding.slide1Desc'),
+    },
+    {
+      emoji: '🧠',
+      title: t('onboarding.slide2Title'),
+      subtitle: t('onboarding.slide2Desc'),
+    },
+    {
+      emoji: '✏️',
+      title: t('onboarding.slide3Title'),
+      subtitle: t('onboarding.slide3Desc'),
+    },
+  ];
+
+  const PURPOSES = [
+    { id: 'school', label: t('onboarding.purposeSchool'), emoji: '🏫' },
+    { id: 'kanken', label: t('onboarding.purposeKanken'), emoji: '📝' },
+    { id: 'japanese', label: t('onboarding.purposeJapanese'), emoji: '🌏' },
+    { id: 'hobby', label: t('onboarding.purposeHobby'), emoji: '🎌' },
+  ];
+
+  const LEVELS = [
+    { id: 0, label: t('onboarding.beginner'), desc: '' },
+    { id: 1, label: '1', desc: '' },
+    { id: 2, label: '2', desc: '' },
+    { id: 3, label: '3', desc: '' },
+    { id: 4, label: '4', desc: '' },
+    { id: 5, label: '5+', desc: '' },
+  ];
+
+  const GOALS = [
+    { minutes: 5, label: '5', desc: '' },
+    { minutes: 10, label: '10', desc: '' },
+    { minutes: 15, label: '15', desc: '' },
+    { minutes: 30, label: '30', desc: '' },
+  ];
   const [step, setStep] = useState<Step>('slides');
   const [slideIndex, setSlideIndex] = useState(0);
   const [name, setName] = useState('');
@@ -108,7 +112,7 @@ export default function OnboardingScreen() {
         </View>
         <View style={styles.bottomActions}>
           <Button
-            title={slideIndex === SLIDES.length - 1 ? '始めましょう' : '次へ'}
+            title={slideIndex === SLIDES.length - 1 ? t('onboarding.start') : t('onboarding.next')}
             onPress={() => {
               if (slideIndex < SLIDES.length - 1) {
                 flatListRef.current?.scrollToIndex({ index: slideIndex + 1 });
@@ -128,20 +132,20 @@ export default function OnboardingScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.stepContent}>
-          <Text style={styles.stepTitle}>お名前を教えてください</Text>
+          <Text style={styles.stepTitle}>{t('onboarding.name')}</Text>
           <TextInput
             style={styles.nameInput}
             value={name}
             onChangeText={setName}
-            placeholder="ニックネーム"
+            placeholder={t('onboarding.namePlaceholder')}
             placeholderTextColor={colors.textLight}
             maxLength={20}
           />
         </View>
         <View style={styles.bottomActions}>
-          <Button title="次へ" onPress={() => setStep('purpose')} />
+          <Button title={t('onboarding.next')} onPress={() => setStep('purpose')} />
           <TouchableOpacity onPress={() => setStep('purpose')}>
-            <Text style={styles.skipText}>スキップ</Text>
+            <Text style={styles.skipText}>{t('onboarding.next')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -153,7 +157,7 @@ export default function OnboardingScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.stepContent}>
-          <Text style={styles.stepTitle}>学習の目的は？</Text>
+          <Text style={styles.stepTitle}>{t('onboarding.purpose')}</Text>
           <View style={styles.optionGrid}>
             {PURPOSES.map((p) => (
               <TouchableOpacity
@@ -170,7 +174,7 @@ export default function OnboardingScreen() {
           </View>
         </View>
         <View style={styles.bottomActions}>
-          <Button title="次へ" onPress={() => setStep('level')} />
+          <Button title={t('onboarding.next')} onPress={() => setStep('level')} />
         </View>
       </View>
     );
@@ -181,7 +185,7 @@ export default function OnboardingScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.stepContent}>
-          <Text style={styles.stepTitle}>今のレベルは？</Text>
+          <Text style={styles.stepTitle}>{t('onboarding.level')}</Text>
           {LEVELS.map((l) => (
             <TouchableOpacity
               key={l.id}
@@ -196,7 +200,7 @@ export default function OnboardingScreen() {
           ))}
         </View>
         <View style={styles.bottomActions}>
-          <Button title="次へ" onPress={() => setStep('goal')} />
+          <Button title={t('onboarding.next')} onPress={() => setStep('goal')} />
         </View>
       </View>
     );
@@ -207,7 +211,7 @@ export default function OnboardingScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.stepContent}>
-          <Text style={styles.stepTitle}>1日の学習目標</Text>
+          <Text style={styles.stepTitle}>{t('onboarding.goal')}</Text>
           <View style={styles.goalGrid}>
             {GOALS.map((g) => (
               <TouchableOpacity
@@ -216,7 +220,7 @@ export default function OnboardingScreen() {
                 onPress={() => setGoalMinutes(g.minutes)}
               >
                 <Text style={[styles.goalTime, goalMinutes === g.minutes && styles.goalTimeSelected]}>
-                  {g.label}
+                  {g.label}{t('settings.min')}
                 </Text>
                 <Text style={styles.goalDesc}>{g.desc}</Text>
               </TouchableOpacity>
@@ -224,7 +228,7 @@ export default function OnboardingScreen() {
           </View>
         </View>
         <View style={styles.bottomActions}>
-          <Button title="次へ" onPress={() => setStep('ready')} />
+          <Button title={t('onboarding.next')} onPress={() => setStep('ready')} />
         </View>
       </View>
     );
@@ -235,10 +239,9 @@ export default function OnboardingScreen() {
     <View style={styles.container}>
       <View style={styles.readyContent}>
         <Text style={styles.readyEmoji}>🎉</Text>
-        <Text style={styles.readyTitle}>準備完了！</Text>
+        <Text style={styles.readyTitle}>{t('onboarding.ready')}</Text>
         <Text style={styles.readySubtitle}>
-          {name || '学習者'}さん{'\n'}
-          漢字マスターの旅を始めましょう
+          {t('onboarding.welcome')}, {name || ''}
         </Text>
         <View style={styles.readySummary}>
           <Text style={styles.summaryText}>📚 {level === 0 ? '1年生' : `${level}年生`}からスタート</Text>
@@ -247,7 +250,7 @@ export default function OnboardingScreen() {
         </View>
       </View>
       <View style={styles.bottomActions}>
-        <Button title="学習を始める！" onPress={completeOnboarding} />
+        <Button title={t('onboarding.start')} onPress={completeOnboarding} />
       </View>
     </View>
   );

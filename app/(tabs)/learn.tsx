@@ -8,6 +8,7 @@ import { KanjiText } from '../../src/components/ui/KanjiText';
 import { GRADE_INFO } from '../../src/types/kanji';
 import { db, schema } from '../../src/db/client';
 import { eq } from 'drizzle-orm';
+import { useI18n } from '../../src/i18n';
 
 interface KanjiRow {
   id: number;
@@ -22,6 +23,7 @@ export default function LearnScreen() {
   const { grade: gradeParam } = useLocalSearchParams<{ grade?: string }>();
   const [selectedGrade, setSelectedGrade] = useState(Number(gradeParam) || 1);
   const [kanjiList, setKanjiList] = useState<KanjiRow[]>([]);
+  const { t } = useI18n();
 
   useEffect(() => {
     loadKanji(selectedGrade);
@@ -60,7 +62,7 @@ export default function LearnScreen() {
                 selectedGrade === g.grade && styles.gradeTabTextActive,
               ]}
             >
-              {g.grade}年
+              {g.grade}{t('learn.grade')}
             </Text>
           </TouchableOpacity>
         ))}

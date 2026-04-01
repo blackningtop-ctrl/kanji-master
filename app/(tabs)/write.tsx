@@ -8,6 +8,7 @@ import { KanjiText } from '../../src/components/ui/KanjiText';
 import { WritingCanvas } from '../../src/components/canvas/WritingCanvas';
 import { db, schema } from '../../src/db/client';
 import { eq, sql } from 'drizzle-orm';
+import { useI18n } from '../../src/i18n';
 
 type WriteMode = 'guide' | 'hint' | 'free';
 
@@ -16,6 +17,7 @@ export default function WriteScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [mode, setMode] = useState<WriteMode>('guide');
   const [canvasKey, setCanvasKey] = useState(0);
+  const { t } = useI18n();
 
   useEffect(() => {
     loadKanji();
@@ -61,7 +63,7 @@ export default function WriteScreen() {
       <View style={styles.targetArea}>
         <KanjiText size="medium">{currentKanji?.character ?? '一'}</KanjiText>
         <Text style={styles.hint}>
-          {currentKanji ? `${currentKanji.strokeCount}画` : ''} ・ {mode === 'guide' ? 'ガイド' : mode === 'hint' ? 'ヒント' : 'フリー'}モード
+          {currentKanji ? `${currentKanji.strokeCount}${t('kanji.strokes')}` : ''} ・ {mode === 'guide' ? t('write.guide') : mode === 'hint' ? t('write.hint') : t('write.free')}
         </Text>
       </View>
 
@@ -74,7 +76,7 @@ export default function WriteScreen() {
             onPress={() => { setMode(m); setCanvasKey((k) => k + 1); }}
           >
             <Text style={[styles.modeButtonText, mode === m && styles.modeButtonTextActive]}>
-              {m === 'guide' ? 'ガイド' : m === 'hint' ? 'ヒント' : 'フリー'}
+              {m === 'guide' ? t('write.guide') : m === 'hint' ? t('write.hint') : t('write.free')}
             </Text>
           </TouchableOpacity>
         ))}
@@ -89,9 +91,9 @@ export default function WriteScreen() {
 
       {/* Controls */}
       <View style={styles.controls}>
-        <Button title="◀ 前" variant="ghost" size="sm" onPress={handlePrev} />
-        <Button title="消す" variant="outline" size="sm" onPress={handleClear} />
-        <Button title="次へ ▶" variant="primary" size="sm" onPress={handleNext} />
+        <Button title={`◀ ${t('write.prev')}`} variant="ghost" size="sm" onPress={handlePrev} />
+        <Button title={t('write.clear')} variant="outline" size="sm" onPress={handleClear} />
+        <Button title={`${t('write.next')} ▶`} variant="primary" size="sm" onPress={handleNext} />
       </View>
 
       {/* Progress */}

@@ -7,12 +7,9 @@ import { spacing, radius, shadow } from '../../src/theme/spacing';
 import { Card } from '../../src/components/ui/Card';
 import { GRADE_INFO } from '../../src/types/kanji';
 import { QUIZ_TYPE_INFO, QuizType } from '../../src/types/quiz';
+import { useI18n } from '../../src/i18n';
 
-const CHALLENGES = [
-  { id: 'speed', emoji: '⚡', title: 'スピードクイズ', desc: '制限時間内に最多正解', color: '#EF4444' },
-  { id: 'boss', emoji: '👹', title: 'ボスバトル', desc: '学年別総合テスト', color: '#8B5CF6' },
-  { id: 'kanken', emoji: '📝', title: '漢検模試', desc: '漢字検定の模擬試験', color: '#3B82F6' },
-];
+// Challenge data is now generated dynamically with i18n in the component
 
 const QUIZ_TYPES: { type: QuizType; free: boolean }[] = [
   { type: 'kanji-to-reading', free: true },
@@ -32,6 +29,13 @@ const QUIZ_TYPES: { type: QuizType; free: boolean }[] = [
 export default function ChallengeScreen() {
   const router = useRouter();
   const [selectedGrade, setSelectedGrade] = useState(1);
+  const { t } = useI18n();
+
+  const CHALLENGES = [
+    { id: 'speed', emoji: '⚡', title: t('challenge.speedQuiz'), desc: t('challenge.speedDesc'), color: '#EF4444' },
+    { id: 'boss', emoji: '👹', title: t('challenge.bossBattle'), desc: t('challenge.bossDesc'), color: '#8B5CF6' },
+    { id: 'kanken', emoji: '📝', title: t('challenge.kankenMock'), desc: t('challenge.kankenDesc'), color: '#3B82F6' },
+  ];
 
   function startQuiz(type: QuizType) {
     const gradeInfo = GRADE_INFO[selectedGrade - 1];
@@ -58,8 +62,8 @@ export default function ChallengeScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>挑戦</Text>
-      <Text style={styles.subtitle}>実力を試そう！</Text>
+      <Text style={styles.title}>{t('challenge.title')}</Text>
+      <Text style={styles.subtitle}>{t('challenge.subtitle')}</Text>
 
       {/* Grade selector */}
       <View style={styles.gradeSelector}>
@@ -70,7 +74,7 @@ export default function ChallengeScreen() {
             onPress={() => setSelectedGrade(g.grade)}
           >
             <Text style={[styles.gradeTabText, selectedGrade === g.grade && { color: '#fff' }]}>
-              {g.grade}年
+              {g.grade}{t('learn.grade')}
             </Text>
           </TouchableOpacity>
         ))}
@@ -100,7 +104,7 @@ export default function ChallengeScreen() {
       ))}
 
       {/* Quiz type selection */}
-      <Text style={styles.sectionTitle}>クイズ12種</Text>
+      <Text style={styles.sectionTitle}>{t('challenge.quiz12')}</Text>
       <View style={styles.quizGrid}>
         {QUIZ_TYPES.map(({ type }) => {
           const info = QUIZ_TYPE_INFO[type];

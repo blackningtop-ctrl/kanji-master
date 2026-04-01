@@ -13,6 +13,7 @@ import { useGameStore } from '../src/stores/useGameStore';
 import { XP_REWARDS } from '../src/types/gamification';
 import { db, schema } from '../src/db/client';
 import * as Haptics from 'expo-haptics';
+import { useI18n } from '../src/i18n';
 
 export default function WriteQuizScreen() {
   const { type = 'reading-to-write', kanjiIds: idsParam } = useLocalSearchParams<{
@@ -21,6 +22,7 @@ export default function WriteQuizScreen() {
   }>();
   const router = useRouter();
   const { addXP } = useGameStore();
+  const { t } = useI18n();
 
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -101,7 +103,7 @@ export default function WriteQuizScreen() {
   if (isLoading) {
     return (
       <View style={styles.center}>
-        <Text style={styles.loadingText}>問題を準備中...</Text>
+        <Text style={styles.loadingText}>{t('quiz.preparing')}</Text>
       </View>
     );
   }
@@ -109,8 +111,8 @@ export default function WriteQuizScreen() {
   if (questions.length === 0) {
     return (
       <View style={styles.center}>
-        <Text style={styles.loadingText}>問題がありません</Text>
-        <Button title="戻る" onPress={() => router.back()} variant="outline" />
+        <Text style={styles.loadingText}>{t('quiz.noQuestions')}</Text>
+        <Button title={t('quiz.back')} onPress={() => router.back()} variant="outline" />
       </View>
     );
   }
@@ -121,20 +123,20 @@ export default function WriteQuizScreen() {
       <View style={styles.container}>
         <View style={styles.resultContainer}>
           <Text style={styles.resultEmoji}>{avgScore >= 80 ? '🎉' : '💪'}</Text>
-          <Text style={styles.resultTitle}>書き取り結果</Text>
-          <Text style={styles.resultScore}>{avgScore}点</Text>
+          <Text style={styles.resultTitle}>{t('writeQuiz.result')}</Text>
+          <Text style={styles.resultScore}>{avgScore}{t('writeQuiz.points')}</Text>
           <Text style={styles.resultDetail}>
-            {scores.length}問完了 ・ 平均{avgScore}点
+            {scores.length}{t('writeQuiz.completed')} ・ {t('writeQuiz.avgScore')}{avgScore}{t('writeQuiz.points')}
           </Text>
           <View style={styles.resultActions}>
-            <Button title="もう一度" onPress={() => {
+            <Button title={t('quiz.retry')} onPress={() => {
               setFinished(false);
               setCurrentIndex(0);
               setScores([]);
               setShowAnswer(false);
               loadQuestions();
             }} />
-            <Button title="戻る" variant="outline" onPress={() => router.back()} />
+            <Button title={t('quiz.back')} variant="outline" onPress={() => router.back()} />
           </View>
         </View>
       </View>
@@ -155,7 +157,7 @@ export default function WriteQuizScreen() {
       {/* Prompt */}
       <View style={styles.promptSection}>
         <Text style={styles.promptLabel}>
-          {type === 'meaning-to-write' ? 'この意味の漢字を書いてください' : 'この読みの漢字を書いてください'}
+          {type === 'meaning-to-write' ? t('writeQuiz.meaningPrompt') : t('writeQuiz.readingPrompt')}
         </Text>
         <Text style={styles.promptText}>{currentQ.prompt}</Text>
       </View>
@@ -174,7 +176,7 @@ export default function WriteQuizScreen() {
         {!showAnswer ? (
           <>
             <Button
-              title="答えを見る"
+              title={t('writeQuiz.showAnswer')}
               variant="outline"
               onPress={() => setShowAnswer(true)}
             />
@@ -183,25 +185,25 @@ export default function WriteQuizScreen() {
                 style={[styles.scoreBtn, { backgroundColor: colors.error + '20' }]}
                 onPress={() => handleNext(30)}
               >
-                <Text style={[styles.scoreBtnText, { color: colors.error }]}>書けなかった</Text>
+                <Text style={[styles.scoreBtnText, { color: colors.error }]}>{t('writeQuiz.couldntWrite')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.scoreBtn, { backgroundColor: colors.warning + '20' }]}
                 onPress={() => handleNext(60)}
               >
-                <Text style={[styles.scoreBtnText, { color: colors.warning }]}>少し書けた</Text>
+                <Text style={[styles.scoreBtnText, { color: colors.warning }]}>{t('writeQuiz.partialWrite')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.scoreBtn, { backgroundColor: colors.success + '20' }]}
                 onPress={() => handleNext(90)}
               >
-                <Text style={[styles.scoreBtnText, { color: colors.success }]}>書けた！</Text>
+                <Text style={[styles.scoreBtnText, { color: colors.success }]}>{t('writeQuiz.wrote')}</Text>
               </TouchableOpacity>
             </View>
           </>
         ) : (
           <View style={styles.answerSection}>
-            <Text style={styles.answerLabel}>正解</Text>
+            <Text style={styles.answerLabel}>{t('writeQuiz.answer')}</Text>
             <Text style={styles.answerKanji}>{currentQ.correctAnswer}</Text>
             <View style={styles.scoreButtons}>
               <TouchableOpacity
