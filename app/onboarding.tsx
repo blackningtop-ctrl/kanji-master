@@ -11,6 +11,7 @@ import { Button } from '../src/components/ui/Button';
 import { db, schema } from '../src/db/client';
 import { eq } from 'drizzle-orm';
 import { useI18n } from '../src/i18n';
+import { onboardingDone } from '../src/stores/onboardingFlag';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -72,16 +73,20 @@ export default function OnboardingScreen() {
 
   async function completeOnboarding() {
     const today = new Date().toISOString().split('T')[0];
-    await db
-      .update(schema.userProfile)
-      .set({
-        name: name || t('onboarding.namePlaceholder'),
-        currentGrade: Math.max(1, level) as number,
-        dailyGoalMinutes: goalMinutes,
-        lastStudyDate: today,
-      })
-      .where(eq(schema.userProfile.id, 1));
-
+    try {
+      await db
+        .update(schema.userProfile)
+        .set({
+          name: name || t('onboarding.namePlaceholder'),
+          currentGrade: Math.max(1, level) as number,
+          dailyGoalMinutes: goalMinutes,
+          lastStudyDate: today,
+        })
+        .where(eq(schema.userProfile.id, 1));
+    } catch (e) {
+      console.warn('[Onboarding] Failed to save profile:', e);
+    }
+    onboardingDone();
     router.replace('/');
   }
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
@@ -10,6 +10,7 @@ import { runMigrations } from '../src/db/migrate';
 import { seedDatabase } from '../src/db/seed';
 import { requestNotificationPermissions, scheduleReviewReminder } from '../src/services/notifications';
 import { colors } from '../src/theme/colors';
+import { onOnboardingDone } from '../src/stores/onboardingFlag';
 import 'react-native-reanimated';
 
 export { ErrorBoundary } from 'expo-router';
@@ -71,15 +72,20 @@ export default function RootLayout() {
   }, []);
 
   const router = useRouter();
-  const segments = useSegments();
+
+  // Listen for onboarding completion
+  useEffect(() => {
+    const unsub = onOnboardingDone(() => {
+      setNeedsOnboarding(false);
+    });
+    return unsub;
+  }, []);
 
   useEffect(() => {
     if (!ready) return;
-    const onOnboardingScreen = segments[0] === 'onboarding';
-    if (needsOnboarding && !onOnboardingScreen) {
-      router.replace('/onboarding');
-    }
-  }, [ready, needsOnboarding, segments]);
+    if (!needsOnboarding) return;
+    router.replace('/onboarding');
+  }, [ready, needsOnboarding]);
 
   if (!ready || !fontsLoaded) {
     return (
