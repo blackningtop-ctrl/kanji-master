@@ -59,14 +59,14 @@ export default function TabLayout() {
       <Tabs.Screen
         name="challenge"
         options={{
-          title: t('tab.practice'),
+          title: t('tab.challenge'),
           tabBarIcon: ({ focused }) => <TabIcon label={'\u25B6'} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: t('tab.myStudy'),
+          title: t('tab.profile'),
           tabBarIcon: ({ focused }) => <TabIcon label={'\u2261'} focused={focused} />,
         }}
       />

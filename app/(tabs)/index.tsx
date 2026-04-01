@@ -54,8 +54,9 @@ export default function HomeScreen() {
           />
           <Button
             title="새 한자 학습"
+            variant="outline"
             onPress={() => router.push('/(tabs)/learn')}
-            style={{...styles.ctaButton, ...styles.ctaSecondary}}
+            style={styles.ctaButton}
           />
         </View>
       </Card>
