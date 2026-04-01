@@ -1,71 +1,85 @@
-import React from 'react';
-import { SymbolView } from 'expo-symbols';
-import { Link, Tabs } from 'expo-router';
-import { Platform, Pressable } from 'react-native';
+import { Tabs } from 'expo-router';
+import { Text, StyleSheet, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors } from '../../src/theme/colors';
+import { typography } from '../../src/theme/typography';
+import { useI18n } from '../../src/i18n';
 
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
-import { useClientOnlyValue } from '@/components/useClientOnlyValue';
+function TabIcon({ label, focused }: { label: string; focused: boolean }) {
+  return (
+    <Text style={[styles.icon, focused && styles.iconFocused]}>{label}</Text>
+  );
+}
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const { t } = useI18n();
+  const insets = useSafeAreaInsets();
+  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'android' ? 12 : 0);
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
-      }}>
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textLight,
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+          height: 60 + bottomPadding,
+          paddingBottom: bottomPadding + 6,
+        },
+        tabBarLabelStyle: {
+          ...typography.caption,
+          fontWeight: '600',
+        },
+        headerStyle: { backgroundColor: colors.background },
+        headerTintColor: colors.text,
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Tab One',
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{
-                ios: 'chevron.left.forwardslash.chevron.right',
-                android: 'code',
-                web: 'code',
-              }}
-              tintColor={color}
-              size={28}
-            />
-          ),
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable style={{ marginRight: 15 }}>
-                {({ pressed }) => (
-                  <SymbolView
-                    name={{ ios: 'info.circle', android: 'info', web: 'info' }}
-                    size={25}
-                    tintColor={Colors[colorScheme].text}
-                    style={{ opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
+          title: t('tab.home'),
+          tabBarIcon: ({ focused }) => <TabIcon label={'\u2302'} focused={focused} />,
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="learn"
         options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{
-                ios: 'chevron.left.forwardslash.chevron.right',
-                android: 'code',
-                web: 'code',
-              }}
-              tintColor={color}
-              size={28}
-            />
-          ),
+          title: t('tab.learn'),
+          tabBarIcon: ({ focused }) => <TabIcon label={'\u6F22'} focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="write"
+        options={{
+          title: t('tab.write'),
+          tabBarIcon: ({ focused }) => <TabIcon label={'\u270E'} focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="challenge"
+        options={{
+          title: t('tab.challenge'),
+          tabBarIcon: ({ focused }) => <TabIcon label={'\u25B6'} focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: t('tab.profile'),
+          tabBarIcon: ({ focused }) => <TabIcon label={'\u2261'} focused={focused} />,
         }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  icon: {
+    fontSize: 20,
+    opacity: 0.5,
+  },
+  iconFocused: {
+    opacity: 1,
+  },
+});
