@@ -29,7 +29,7 @@ const QUIZ_TYPES: { type: QuizType; free: boolean }[] = [
 export default function ChallengeScreen() {
   const router = useRouter();
   const [selectedGrade, setSelectedGrade] = useState(1);
-  const { t } = useI18n();
+  const { t, language } = useI18n();
 
   const CHALLENGES = [
     { id: 'speed', emoji: '⚡', title: t('challenge.speedQuiz'), desc: t('challenge.speedDesc'), color: '#EF4444' },
@@ -115,8 +115,8 @@ export default function ChallengeScreen() {
               onPress={() => startQuiz(type)}
             >
               <Text style={styles.quizIcon}>{info.icon}</Text>
-              <Text style={styles.quizLabel} numberOfLines={1}>{info.labelJa}</Text>
-              <Text style={styles.quizCategory}>{info.category === 'reading' ? '読み' : info.category === 'writing' ? '書き' : '知識'}</Text>
+              <Text style={styles.quizLabel} numberOfLines={1}>{language === 'ko' ? info.labelKo : info.labelJa}</Text>
+              <Text style={styles.quizCategory}>{info.category === 'reading' ? (language === 'ko' ? '읽기' : '読み') : info.category === 'writing' ? (language === 'ko' ? '쓰기' : '書き') : (language === 'ko' ? '지식' : '知識')}</Text>
             </TouchableOpacity>
           );
         })}
