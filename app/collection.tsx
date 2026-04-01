@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
 import { colors } from '../src/theme/colors';
 import { typography } from '../src/theme/typography';
 import { spacing, radius, shadow } from '../src/theme/spacing';
@@ -21,10 +21,13 @@ interface CollectionKanji {
 
 export default function CollectionScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const [selectedGrade, setSelectedGrade] = useState(1);
   const [kanjiList, setKanjiList] = useState<CollectionKanji[]>([]);
   const [stats, setStats] = useState({ total: 0, mastered: 0, learning: 0 });
   const { t } = useI18n();
+
+  useEffect(() => { navigation.setOptions({ title: t('collection.title') }); }, [t]);
 
   useEffect(() => {
     loadCollection(selectedGrade);

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Switch, StyleSheet, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
 import { colors } from '../src/theme/colors';
 import { typography } from '../src/theme/typography';
 import { spacing, radius } from '../src/theme/spacing';
@@ -13,8 +13,11 @@ import { useI18n, AppLanguage } from '../src/i18n';
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const { mode: themeMode, setMode: setThemeMode } = useThemeStore();
   const { t, language, setLanguage } = useI18n();
+
+  useEffect(() => { navigation.setOptions({ title: t('profile.settings') }); }, [t]);
   const [dailyGoal, setDailyGoal] = useState(10);
   const [dailyNewLimit, setDailyNewLimit] = useState(5);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);

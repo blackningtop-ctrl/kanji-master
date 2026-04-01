@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { colors } from '../../src/theme/colors';
 import { typography } from '../../src/theme/typography';
 import { spacing, radius, shadow } from '../../src/theme/spacing';
@@ -45,8 +45,13 @@ interface VocabItem {
 export default function KanjiDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const navigation = useNavigation();
   const { addKanjiToStudy } = useStudyStore();
   const { t } = useI18n();
+
+  useEffect(() => {
+    navigation.setOptions({ title: t('kanji.detail') });
+  }, [t]);
   const [kanji, setKanji] = useState<KanjiDetail | null>(null);
   const [vocab, setVocab] = useState<VocabItem[]>([]);
   const [mnemonic, setMnemonic] = useState<string>('');

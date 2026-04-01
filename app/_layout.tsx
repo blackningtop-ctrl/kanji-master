@@ -106,38 +106,14 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="kanji/[id]"
-          options={{ title: '漢字詳細', presentation: 'card' }}
-        />
-        <Stack.Screen
-          name="review"
-          options={{ title: '復習', presentation: 'fullScreenModal' }}
-        />
-        <Stack.Screen
-          name="quiz"
-          options={{ title: 'クイズ', presentation: 'fullScreenModal', headerShown: false }}
-        />
-        <Stack.Screen
-          name="write-quiz"
-          options={{ title: '書き取り', presentation: 'fullScreenModal', headerShown: false }}
-        />
-        <Stack.Screen
-          name="onboarding"
-          options={{ title: '初期設定', presentation: 'fullScreenModal', headerShown: false }}
-        />
-        <Stack.Screen
-          name="collection"
-          options={{ title: '漢字図鑑', presentation: 'card' }}
-        />
-        <Stack.Screen
-          name="radical"
-          options={{ title: '部首', presentation: 'card' }}
-        />
-        <Stack.Screen
-          name="settings"
-          options={{ title: '設定', presentation: 'card' }}
-        />
+        <Stack.Screen name="kanji/[id]" options={{ title: '', presentation: 'card' }} />
+        <Stack.Screen name="review" options={{ title: '', presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="quiz" options={{ presentation: 'fullScreenModal', headerShown: false }} />
+        <Stack.Screen name="write-quiz" options={{ presentation: 'fullScreenModal', headerShown: false }} />
+        <Stack.Screen name="onboarding" options={{ presentation: 'fullScreenModal', headerShown: false }} />
+        <Stack.Screen name="collection" options={{ title: '', presentation: 'card' }} />
+        <Stack.Screen name="radical" options={{ title: '', presentation: 'card' }} />
+        <Stack.Screen name="settings" options={{ title: '', presentation: 'card' }} />
       </Stack>
     </>
   );

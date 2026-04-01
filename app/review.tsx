@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
 import { colors } from '../src/theme/colors';
 import { typography } from '../src/theme/typography';
 import { spacing, radius } from '../src/theme/spacing';
@@ -19,8 +19,11 @@ import { useI18n } from '../src/i18n';
 
 export default function ReviewScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const { dueCards, currentCardIndex, answerCard, loadDueCards } = useStudyStore();
   const { t } = useI18n();
+
+  useEffect(() => { navigation.setOptions({ title: t('review.title') }); }, [t]);
 
   const GRADE_BUTTONS: { grade: ReviewGrade; label: string; color: string }[] = [
     { grade: 'again', label: t('review.again'), color: colors.error },

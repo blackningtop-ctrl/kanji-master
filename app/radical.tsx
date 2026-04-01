@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, FlatList, TouchableOpacity, StyleSheet, Animated,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { colors } from '../src/theme/colors';
 import { typography } from '../src/theme/typography';
 import { spacing, radius, shadow } from '../src/theme/spacing';
@@ -26,7 +26,10 @@ interface RadicalInfo {
 export default function RadicalScreen() {
   const { kanjiId } = useLocalSearchParams<{ kanjiId?: string }>();
   const router = useRouter();
+  const navigation = useNavigation();
   const { t } = useI18n();
+
+  useEffect(() => { navigation.setOptions({ title: t('radical.title') }); }, [t]);
   const [radical, setRadical] = useState<RadicalInfo | null>(null);
   const [allRadicals, setAllRadicals] = useState<{ id: number; character: string; meaning: string; count: number }[]>([]);
   const [mode, setMode] = useState<'detail' | 'browse'>(kanjiId ? 'detail' : 'browse');
