@@ -10,7 +10,7 @@ import { runMigrations } from '../src/db/migrate';
 import { seedDatabase } from '../src/db/seed';
 import { requestNotificationPermissions, scheduleReviewReminder } from '../src/services/notifications';
 import { colors } from '../src/theme/colors';
-import { onOnboardingDone } from '../src/stores/onboardingFlag';
+import { onOnboardingDone, isOnboardingDone } from '../src/stores/onboardingFlag';
 import 'react-native-reanimated';
 
 export { ErrorBoundary } from 'expo-router';
@@ -48,7 +48,7 @@ export default function RootLayout() {
         try {
           const { db: database, schema: sch } = await import('../src/db/client');
           const profiles = await database.select().from(sch.userProfile).limit(1);
-          if (profiles.length === 0 || !profiles[0].lastStudyDate) {
+          if (!isOnboardingDone() && (profiles.length === 0 || !profiles[0].lastStudyDate)) {
             setNeedsOnboarding(true);
           }
         } catch {
