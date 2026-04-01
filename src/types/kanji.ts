@@ -73,10 +73,10 @@ export interface StrokeData {
 }
 
 export const GRADE_INFO = [
-  { grade: 1, label: '1年生', count: 80, color: '#EF4444' },
-  { grade: 2, label: '2年生', count: 160, color: '#F97316' },
-  { grade: 3, label: '3年生', count: 200, color: '#EAB308' },
-  { grade: 4, label: '4年生', count: 202, color: '#22C55E' },
-  { grade: 5, label: '5年生', count: 193, color: '#3B82F6' },
-  { grade: 6, label: '6年生', count: 191, color: '#8B5CF6' },
+  { grade: 1, label: '1단계 (N5)', count: 80, color: '#EF4444' },
+  { grade: 2, label: '2단계 (N4)', count: 160, color: '#F97316' },
+  { grade: 3, label: '3단계 (N3)', count: 200, color: '#EAB308' },
+  { grade: 4, label: '4단계 (N3)', count: 202, color: '#22C55E' },
+  { grade: 5, label: '5단계 (N2)', count: 193, color: '#3B82F6' },
+  { grade: 6, label: '6단계 (N2)', count: 191, color: '#8B5CF6' },
 ] as const;

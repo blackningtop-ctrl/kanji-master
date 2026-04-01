@@ -11,6 +11,8 @@ import { useStudyStore } from '../../src/stores/useStudyStore';
 import { GRADE_INFO } from '../../src/types/kanji';
 import { useI18n } from '../../src/i18n';
 
+const TOTAL_KANJI = 1026;
+
 export default function HomeScreen() {
   const router = useRouter();
   const { stats, streakDays, loadStats, loadDueCards } = useStudyStore();
@@ -20,65 +22,67 @@ export default function HomeScreen() {
     loadStats();
   }, []);
 
-  const totalKanji = stats.newCount + stats.learningCount + stats.reviewCount + stats.masteredCount;
-  const masteredRatio = totalKanji > 0 ? stats.masteredCount / totalKanji : 0;
+  const learnedCount = stats.learningCount + stats.reviewCount + stats.masteredCount;
+  const progressRatio = learnedCount / TOTAL_KANJI;
+  const progressPercent = Math.round(progressRatio * 100);
+  const newAvailable = TOTAL_KANJI - learnedCount - stats.newCount;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* 스트릭 & 인사 */}
-      <View style={styles.header}>
-        <Text style={styles.greeting}>{t('home.title')}</Text>
-        <View style={styles.streakBadge}>
-          <Text style={styles.streakEmoji}>🔥</Text>
-          <Text style={styles.streakCount}>{streakDays}</Text>
-        </View>
-      </View>
-
-      {/* 오늘의 학습 현황 */}
+      {/* 오늘의 학습 */}
       <Card style={styles.todayCard}>
-        <Text style={styles.cardTitle}>{t('home.todayStudy')}</Text>
-        <View style={styles.statsRow}>
-          <StatBlock label={t('home.dueCards')} value={stats.dueCount} color={colors.primary} />
-          <StatBlock label={t('learn.studying')} value={stats.learningCount} color={colors.srsLearning} />
-          <StatBlock label={t('home.mastered')} value={stats.masteredCount} color={colors.srsMastered} />
+        <Text style={styles.cardTitle}>오늘의 학습</Text>
+        <View style={styles.dualStat}>
+          <View style={styles.dualStatBlock}>
+            <Text style={styles.bigNumber}>{stats.dueCount}</Text>
+            <Text style={styles.bigNumberLabel}>복습 대기</Text>
+          </View>
+          <View style={styles.dualStatDivider} />
+          <View style={styles.dualStatBlock}>
+            <Text style={[styles.bigNumber, { color: colors.info }]}>{newAvailable > 0 ? newAvailable : 0}</Text>
+            <Text style={styles.bigNumberLabel}>신규 한자</Text>
+          </View>
         </View>
-        <Button
-          title={stats.dueCount > 0 ? `${t('home.startReview')} (${stats.dueCount})` : t('home.startLearn')}
-          onPress={() => {
-            if (stats.dueCount > 0) {
+        <View style={styles.ctaRow}>
+          <Button
+            title="복습 시작"
+            onPress={() => {
               loadDueCards();
               router.push('/review');
-            } else {
-              router.push('/(tabs)/learn');
-            }
-          }}
-          style={styles.startButton}
-        />
+            }}
+            style={{...styles.ctaButton, ...(!stats.dueCount ? styles.ctaDisabled : {})}}
+          />
+          <Button
+            title="새 한자 학습"
+            onPress={() => router.push('/(tabs)/learn')}
+            style={{...styles.ctaButton, ...styles.ctaSecondary}}
+          />
+        </View>
       </Card>
 
       {/* 전체 진도 */}
       <Card style={styles.progressCard}>
-        <Text style={styles.cardTitle}>{t('home.gradeProgress')}</Text>
+        <Text style={styles.sectionLabel}>전체 진도</Text>
         <ProgressBar
-          progress={masteredRatio}
+          progress={progressRatio}
           color={colors.accent}
           showLabel
-          label={`${stats.masteredCount} / ${totalKanji || 1026} ${t('home.chars')}`}
+          label={`${learnedCount} / ${TOTAL_KANJI}자  ${progressPercent}%`}
           style={styles.progressBar}
         />
       </Card>
 
-      {/* 학년별 진도 */}
+      {/* 단계별 진도 */}
       <Card>
-        <Text style={styles.cardTitle}>{t('home.gradeProgress')}</Text>
+        <Text style={styles.sectionLabel}>단계별 진도</Text>
         {GRADE_INFO.map((g) => (
           <TouchableOpacity
             key={g.grade}
             style={styles.gradeRow}
             onPress={() => router.push(`/(tabs)/learn?grade=${g.grade}`)}
           >
-            <Text style={styles.gradeLabel}>{g.grade}{t('learn.grade')}</Text>
-            <Text style={styles.gradeCount}>{g.count}{t('home.chars')}</Text>
+            <Text style={styles.gradeLabel}>{g.label}</Text>
+            <Text style={styles.gradeCount}>{g.count}자</Text>
             <ProgressBar
               progress={0}
               color={g.color}
@@ -88,16 +92,10 @@ export default function HomeScreen() {
           </TouchableOpacity>
         ))}
       </Card>
-    </ScrollView>
-  );
-}
 
-function StatBlock({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <View style={styles.statBlock}>
-      <Text style={[styles.statValue, { color }]}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
+      {/* 연속 학습 */}
+      <Text style={styles.streakText}>연속 학습 {streakDays}일</Text>
+    </ScrollView>
   );
 }
 
@@ -111,61 +109,60 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
     paddingBottom: spacing.xxxl,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  greeting: {
-    ...typography.h1,
-    color: colors.text,
-  },
-  streakBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.full,
-    ...shadow.sm,
-  },
-  streakEmoji: {
-    fontSize: 18,
-    marginRight: spacing.xs,
-  },
-  streakCount: {
-    ...typography.label,
-    color: colors.primary,
-  },
   todayCard: {
     backgroundColor: colors.surface,
   },
   cardTitle: {
+    ...typography.h2,
+    color: colors.text,
+    marginBottom: spacing.lg,
+  },
+  dualStat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  dualStatBlock: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  dualStatDivider: {
+    width: 1,
+    height: 48,
+    backgroundColor: colors.border,
+  },
+  bigNumber: {
+    fontSize: 40,
+    fontWeight: '700',
+    color: colors.primary,
+    lineHeight: 48,
+  },
+  bigNumberLabel: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
+  ctaRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  ctaButton: {
+    flex: 1,
+  },
+  ctaSecondary: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  ctaDisabled: {
+    opacity: 0.5,
+  },
+  progressCard: {},
+  sectionLabel: {
     ...typography.h3,
     color: colors.text,
     marginBottom: spacing.md,
   },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: spacing.lg,
-  },
-  statBlock: {
-    alignItems: 'center',
-  },
-  statValue: {
-    ...typography.h1,
-    fontSize: 32,
-  },
-  statLabel: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
-  },
-  startButton: {
-    marginTop: spacing.sm,
-  },
-  progressCard: {},
   progressBar: {
     marginTop: spacing.sm,
   },
@@ -180,15 +177,23 @@ const styles = StyleSheet.create({
     ...typography.body,
     fontWeight: '600',
     color: colors.text,
-    width: 60,
+    width: 110,
   },
   gradeCount: {
     ...typography.bodySmall,
     color: colors.textSecondary,
-    width: 40,
+    width: 45,
+    textAlign: 'right',
+    marginRight: spacing.sm,
   },
   gradeProgress: {
     flex: 1,
     marginLeft: spacing.sm,
+  },
+  streakText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: spacing.sm,
   },
 });

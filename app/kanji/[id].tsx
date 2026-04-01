@@ -52,6 +52,7 @@ export default function KanjiDetailScreen() {
   useEffect(() => {
     navigation.setOptions({ title: t('kanji.detail') });
   }, [t]);
+
   const [kanji, setKanji] = useState<KanjiDetail | null>(null);
   const [vocab, setVocab] = useState<VocabItem[]>([]);
   const [mnemonic, setMnemonic] = useState<string>('');
@@ -127,80 +128,81 @@ export default function KanjiDetailScreen() {
   if (!kanji) {
     return (
       <View style={styles.loading}>
-        <Text style={styles.loadingText}>読み込み中...</Text>
+        <Text style={styles.loadingText}>로딩 중...</Text>
       </View>
     );
   }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* 메인 한자 표시 */}
+      {/* 1. 한자 + 배지 */}
       <View style={styles.kanjiHeader}>
         <KanjiText size="huge">{kanji.character}</KanjiText>
         <View style={styles.badges}>
-          <Badge label={`${kanji.grade}${t('learn.grade')}`} color={colors.secondary} />
-          <Badge label={`${kanji.strokeCount}${t('kanji.strokes')}`} color={colors.textSecondary} />
+          <Badge label={`${kanji.grade}단계`} color={colors.secondary} />
+          <Badge label={`${kanji.strokeCount}획`} color={colors.textSecondary} />
           {kanji.jlptLevel && <Badge label={`N${kanji.jlptLevel}`} color={colors.info} />}
         </View>
       </View>
 
-      {/* 읽기 */}
+      {/* 2. 한국어 뜻 (가장 먼저, 크게) */}
       <Card>
-        <Text style={styles.sectionTitle}>{t('kanji.readings')}</Text>
+        <Text style={styles.sectionTitle}>한국어 뜻</Text>
+        <Text style={styles.meaningKoPrimary}>{kanji.meaningsKo.join(', ')}</Text>
+      </Card>
+
+      {/* 3. 일본어 / 영어 뜻 (작게) */}
+      <Card>
+        <Text style={styles.sectionTitle}>일본어 / 영어 뜻</Text>
+        <Text style={styles.meaningSecondary}>JP: {kanji.meaningsJa.join(', ')}</Text>
+        <Text style={styles.meaningSecondary}>EN: {kanji.meaningsEn.join(', ')}</Text>
+      </Card>
+
+      {/* 4. 읽기 섹션 */}
+      <Card>
+        <Text style={styles.sectionTitle}>읽기</Text>
         <View style={styles.readingRow}>
           <View style={styles.readingBlock}>
-            <Text style={styles.readingLabel}>{t('kanji.onyomi')}</Text>
-            <TouchableOpacity onPress={() => speakJapanese(kanji.onReadings[0] ?? kanji.character)}>
-              <Text style={styles.readingValue}>{kanji.onReadings.join('・')} 🔊</Text>
-            </TouchableOpacity>
+            <Text style={styles.readingLabel}>음독 (ON)</Text>
+            <View style={styles.readingValueRow}>
+              <Text style={styles.readingValue}>{kanji.onReadings.join(' / ')}</Text>
+              <TouchableOpacity
+                style={styles.ttsButton}
+                onPress={() => speakJapanese(kanji.onReadings[0] ?? kanji.character)}
+              >
+                <Text style={styles.ttsButtonText}>TTS</Text>
+              </TouchableOpacity>
+            </View>
           </View>
           <View style={styles.readingBlock}>
-            <Text style={styles.readingLabel}>{t('kanji.kunyomi')}</Text>
-            <TouchableOpacity onPress={() => speakJapanese(kanji.kunReadings[0]?.replace(/-/g, '') ?? kanji.character)}>
-              <Text style={styles.readingValue}>{kanji.kunReadings.join('・')} 🔊</Text>
-            </TouchableOpacity>
+            <Text style={styles.readingLabel}>훈독 (KUN)</Text>
+            <View style={styles.readingValueRow}>
+              <Text style={styles.readingValue}>{kanji.kunReadings.join(' / ')}</Text>
+              <TouchableOpacity
+                style={styles.ttsButton}
+                onPress={() => speakJapanese(kanji.kunReadings[0]?.replace(/-/g, '') ?? kanji.character)}
+              >
+                <Text style={styles.ttsButtonText}>TTS</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Card>
 
-      {/* 의미 */}
-      <Card>
-        <Text style={styles.sectionTitle}>{t('kanji.meanings')}</Text>
-        <Text style={styles.meaningText}>🇯🇵 {kanji.meaningsJa.join('、')}</Text>
-        <Text style={styles.meaningText}>🇰🇷 {kanji.meaningsKo.join(', ')}</Text>
-        <Text style={styles.meaningText}>🇬🇧 {kanji.meaningsEn.join(', ')}</Text>
-      </Card>
-
-      {/* 필순 애니메이션 */}
+      {/* 5. 필순 애니메이션 */}
       {strokePaths.length > 0 && (
         <Card>
-          <Text style={styles.sectionTitle}>{t('kanji.strokeOrder')}</Text>
+          <Text style={styles.sectionTitle}>필순</Text>
           <View style={{ alignItems: 'center' }}>
             <StrokeOrderViewer paths={strokePaths} size={240} />
           </View>
         </Card>
       )}
 
-      {/* 부수 분해 */}
-      {radicalChar ? (
-        <TouchableOpacity onPress={() => router.push(`/radical?kanjiId=${kanji.id}`)}>
-          <Card style={styles.radicalCard}>
-            <Text style={styles.sectionTitle}>{t('kanji.radical')}</Text>
-            <View style={styles.radicalRow}>
-              <Text style={styles.radicalChar}>{radicalChar}</Text>
-              <Text style={styles.radicalHint}>{t('radical.title')} →</Text>
-            </View>
-          </Card>
-        </TouchableOpacity>
-      ) : null}
-
-      {/* 니모닉 */}
-      <MnemonicCard kanjiId={kanji.id} character={kanji.character} />
-
-      {/* 어휘 */}
+      {/* 6. 관련 숙어 + 예문 */}
       {vocab.length > 0 && (
         <Card>
-          <Text style={styles.sectionTitle}>{t('kanji.vocabulary')}</Text>
+          <Text style={styles.sectionTitle}>관련 숙어 / 예문</Text>
           {vocab.map((v, i) => (
             <View key={i} style={styles.vocabItem}>
               <View style={styles.vocabHeader}>
@@ -216,15 +218,31 @@ export default function KanjiDetailScreen() {
         </Card>
       )}
 
-      {/* 학습 시작 버튼 */}
+      {/* 7. 부수 정보 */}
+      {radicalChar ? (
+        <TouchableOpacity onPress={() => router.push(`/radical?kanjiId=${kanji.id}`)}>
+          <Card style={styles.radicalCard}>
+            <Text style={styles.sectionTitle}>부수</Text>
+            <View style={styles.radicalRow}>
+              <Text style={styles.radicalChar}>{radicalChar}</Text>
+              <Text style={styles.radicalHint}>부수 상세 보기</Text>
+            </View>
+          </Card>
+        </TouchableOpacity>
+      ) : null}
+
+      {/* 8. 기억법 */}
+      <MnemonicCard kanjiId={kanji.id} character={kanji.character} />
+
+      {/* 9. 학습 큐에 추가 버튼 */}
       <Button
-        title={isAdded ? `✓ ${t('kanji.alreadyLearning')}` : t('kanji.startLearn')}
+        title={isAdded ? '학습 큐에 추가됨' : '학습 큐에 추가'}
         onPress={async () => {
           if (isAdded) return;
           await addKanjiToStudy(kanji.id);
           setIsAdded(true);
         }}
-        style={[styles.studyButton, isAdded && { backgroundColor: colors.success, opacity: 0.8 }]}
+        style={{...styles.studyButton, ...(isAdded ? styles.studyButtonAdded : {})}}
       />
     </ScrollView>
   );
@@ -263,6 +281,17 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: spacing.md,
   },
+  meaningKoPrimary: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.primary,
+    lineHeight: 32,
+  },
+  meaningSecondary: {
+    ...typography.body,
+    color: colors.textSecondary,
+    marginBottom: spacing.xs,
+  },
   readingRow: {
     flexDirection: 'row',
     gap: spacing.xl,
@@ -275,19 +304,28 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: spacing.xs,
   },
+  readingValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
   readingValue: {
     ...typography.h3,
     color: colors.primary,
+    flex: 1,
   },
-  meaningText: {
-    ...typography.body,
-    color: colors.text,
-    marginBottom: spacing.xs,
+  ttsButton: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  mnemonicText: {
-    ...typography.body,
-    color: colors.text,
-    lineHeight: 26,
+  ttsButtonText: {
+    ...typography.caption,
+    color: colors.primary,
+    fontWeight: '600',
   },
   radicalCard: {},
   radicalRow: {
@@ -329,11 +367,15 @@ const styles = StyleSheet.create({
   },
   vocabExample: {
     ...typography.bodySmall,
-    color: colors.textLight,
+    color: colors.textSecondary,
     marginTop: spacing.xs,
     fontStyle: 'italic',
   },
   studyButton: {
     marginTop: spacing.md,
+  },
+  studyButtonAdded: {
+    backgroundColor: colors.success,
+    opacity: 0.8,
   },
 });

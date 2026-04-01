@@ -5,9 +5,9 @@ import { colors } from '../../src/theme/colors';
 import { typography } from '../../src/theme/typography';
 import { useI18n } from '../../src/i18n';
 
-function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
+function TabIcon({ label, focused }: { label: string; focused: boolean }) {
   return (
-    <Text style={[styles.icon, focused && styles.iconFocused]}>{emoji}</Text>
+    <Text style={[styles.icon, focused && styles.iconFocused]}>{label}</Text>
   );
 }
 
@@ -39,35 +39,35 @@ export default function TabLayout() {
         name="index"
         options={{
           title: t('tab.home'),
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon label={'\u2302'} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="learn"
         options={{
           title: t('tab.learn'),
-          tabBarIcon: ({ focused }) => <TabIcon emoji="📖" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon label={'\u6F22'} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="write"
         options={{
           title: t('tab.write'),
-          tabBarIcon: ({ focused }) => <TabIcon emoji="✏️" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon label={'\u270E'} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="challenge"
         options={{
-          title: t('tab.challenge'),
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🏆" focused={focused} />,
+          title: t('tab.practice'),
+          tabBarIcon: ({ focused }) => <TabIcon label={'\u25B6'} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: t('tab.profile'),
-          tabBarIcon: ({ focused }) => <TabIcon emoji="👤" focused={focused} />,
+          title: t('tab.myStudy'),
+          tabBarIcon: ({ focused }) => <TabIcon label={'\u2261'} focused={focused} />,
         }}
       />
     </Tabs>
@@ -76,8 +76,8 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   icon: {
-    fontSize: 22,
-    opacity: 0.6,
+    fontSize: 20,
+    opacity: 0.5,
   },
   iconFocused: {
     opacity: 1,

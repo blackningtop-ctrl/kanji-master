@@ -1,8 +1,5 @@
-import { useState, useRef } from 'react';
-import {
-  View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions,
-  FlatList, TextInput, ScrollView,
-} from 'react-native';
+import { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '../src/theme/colors';
 import { typography } from '../src/theme/typography';
@@ -12,76 +9,38 @@ import { db, schema } from '../src/db/client';
 import { eq } from 'drizzle-orm';
 import { useI18n } from '../src/i18n';
 import { onboardingDone } from '../src/stores/onboardingFlag';
-import { useBottomInset } from '../src/hooks/useBottomInset';
 
-const { width: SCREEN_W } = Dimensions.get('window');
+type Step = 'intro' | 'jlpt' | 'daily';
 
-// Slides, purposes, levels, and goals are now generated dynamically with i18n in the component
+type JlptLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1';
 
-type Step = 'slides' | 'name' | 'purpose' | 'level' | 'goal' | 'ready';
+const JLPT_OPTIONS: { id: JlptLevel; desc: string; grade: number }[] = [
+  { id: 'N5', desc: '기초 한자 80자 (1단계)', grade: 1 },
+  { id: 'N4', desc: '일상 한자 240자 (1-2단계)', grade: 2 },
+  { id: 'N3', desc: '중급 한자 640자 (1-4단계)', grade: 4 },
+  { id: 'N2', desc: '상급 한자 1,026자 (전체)', grade: 6 },
+  { id: 'N1', desc: '전체 + 심화 학습', grade: 6 },
+];
+
+const DAILY_OPTIONS = [5, 10, 15, 20];
 
 export default function OnboardingScreen() {
   const router = useRouter();
   const { t } = useI18n();
-  const bottomInset = useBottomInset();
 
-  const SLIDES = [
-    {
-      emoji: '🇯🇵',
-      title: t('onboarding.slide1Title'),
-      subtitle: t('onboarding.slide1Desc'),
-    },
-    {
-      emoji: '🧠',
-      title: t('onboarding.slide2Title'),
-      subtitle: t('onboarding.slide2Desc'),
-    },
-    {
-      emoji: '✏️',
-      title: t('onboarding.slide3Title'),
-      subtitle: t('onboarding.slide3Desc'),
-    },
-  ];
-
-  const PURPOSES = [
-    { id: 'school', label: t('onboarding.purposeSchool'), emoji: '🏫' },
-    { id: 'kanken', label: t('onboarding.purposeKanken'), emoji: '📝' },
-    { id: 'japanese', label: t('onboarding.purposeJapanese'), emoji: '🌏' },
-    { id: 'hobby', label: t('onboarding.purposeHobby'), emoji: '🎌' },
-  ];
-
-  const LEVELS = [
-    { id: 0, label: t('onboarding.beginner'), desc: '' },
-    { id: 1, label: '1', desc: '' },
-    { id: 2, label: '2', desc: '' },
-    { id: 3, label: '3', desc: '' },
-    { id: 4, label: '4', desc: '' },
-    { id: 5, label: '5+', desc: '' },
-  ];
-
-  const GOALS = [
-    { minutes: 5, label: '5', desc: '' },
-    { minutes: 10, label: '10', desc: '' },
-    { minutes: 15, label: '15', desc: '' },
-    { minutes: 30, label: '30', desc: '' },
-  ];
-  const [step, setStep] = useState<Step>('slides');
-  const [slideIndex, setSlideIndex] = useState(0);
-  const [name, setName] = useState('');
-  const [purpose, setPurpose] = useState('');
-  const [level, setLevel] = useState(0);
-  const [goalMinutes, setGoalMinutes] = useState(10);
-  const flatListRef = useRef<FlatList>(null);
+  const [step, setStep] = useState<Step>('intro');
+  const [jlpt, setJlpt] = useState<JlptLevel>('N5');
+  const [dailyCount, setDailyCount] = useState(10);
 
   async function completeOnboarding() {
     const today = new Date().toISOString().split('T')[0];
+    const selected = JLPT_OPTIONS.find((o) => o.id === jlpt)!;
     try {
       await db
         .update(schema.userProfile)
         .set({
-          name: name || t('onboarding.namePlaceholder'),
-          currentGrade: Math.max(1, level) as number,
-          dailyGoalMinutes: goalMinutes,
+          currentGrade: selected.grade,
+          dailyNewLimit: dailyCount,
           lastStudyDate: today,
         })
         .where(eq(schema.userProfile.id, 1));
@@ -92,172 +51,112 @@ export default function OnboardingScreen() {
     router.replace('/');
   }
 
-  // Slide intro
-  if (step === 'slides') {
+  // Step 1: Intro
+  if (step === 'intro') {
     return (
       <View style={styles.container}>
-        <FlatList
-          ref={flatListRef}
-          data={SLIDES}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={(e) => {
-            setSlideIndex(Math.round(e.nativeEvent.contentOffset.x / SCREEN_W));
-          }}
-          renderItem={({ item }) => (
-            <View style={[styles.slide, { width: SCREEN_W }]}>
-              <Text style={styles.slideEmoji}>{item.emoji}</Text>
-              <Text style={styles.slideTitle}>{item.title}</Text>
-              <Text style={styles.slideSubtitle}>{item.subtitle}</Text>
-            </View>
-          )}
-          keyExtractor={(_, i) => String(i)}
-        />
-        <View style={styles.dots}>
-          {SLIDES.map((_, i) => (
-            <View key={i} style={[styles.dot, i === slideIndex && styles.dotActive]} />
-          ))}
+        <View style={styles.centered}>
+          <Text style={styles.introTitle}>
+            {t('onboarding.slide1Title')}
+          </Text>
+          <Text style={styles.introSubtitle}>
+            {t('onboarding.slide1Desc')}
+          </Text>
         </View>
         <View style={styles.bottomActions}>
           <Button
-            title={slideIndex === SLIDES.length - 1 ? t('onboarding.start') : t('onboarding.next')}
-            onPress={() => {
-              if (slideIndex < SLIDES.length - 1) {
-                flatListRef.current?.scrollToIndex({ index: slideIndex + 1 });
-                setSlideIndex(slideIndex + 1);
-              } else {
-                setStep('name');
-              }
-            }}
+            title={t('onboarding.start')}
+            onPress={() => setStep('jlpt')}
           />
         </View>
       </View>
     );
   }
 
-  // Name input
-  if (step === 'name') {
+  // Step 2: JLPT Goal Selection
+  if (step === 'jlpt') {
     return (
       <View style={styles.container}>
         <View style={styles.stepContent}>
-          <Text style={styles.stepTitle}>{t('onboarding.name')}</Text>
-          <TextInput
-            style={styles.nameInput}
-            value={name}
-            onChangeText={setName}
-            placeholder={t('onboarding.namePlaceholder')}
-            placeholderTextColor={colors.textLight}
-            maxLength={20}
+          <Text style={styles.stepTitle}>
+            {t('onboarding.slide2Title')}
+          </Text>
+          <View style={styles.jlptList}>
+            {JLPT_OPTIONS.map((option) => {
+              const selected = jlpt === option.id;
+              return (
+                <TouchableOpacity
+                  key={option.id}
+                  style={[styles.jlptRow, selected && styles.jlptRowSelected]}
+                  onPress={() => setJlpt(option.id)}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.jlptLabel,
+                      selected && styles.jlptLabelSelected,
+                    ]}
+                  >
+                    {option.id}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.jlptDesc,
+                      selected && styles.jlptDescSelected,
+                    ]}
+                  >
+                    {option.desc}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+        <View style={styles.bottomActions}>
+          <Button
+            title={t('onboarding.next')}
+            onPress={() => setStep('daily')}
           />
         </View>
-        <View style={styles.bottomActions}>
-          <Button title={t('onboarding.next')} onPress={() => setStep('purpose')} />
-        </View>
       </View>
     );
   }
 
-  // Purpose selection
-  if (step === 'purpose') {
-    return (
-      <View style={styles.container}>
-        <View style={styles.stepContent}>
-          <Text style={styles.stepTitle}>{t('onboarding.purpose')}</Text>
-          <View style={styles.optionGrid}>
-            {PURPOSES.map((p) => (
-              <TouchableOpacity
-                key={p.id}
-                style={[styles.optionCard, purpose === p.id && styles.optionCardSelected]}
-                onPress={() => setPurpose(p.id)}
-              >
-                <Text style={styles.optionEmoji}>{p.emoji}</Text>
-                <Text style={[styles.optionLabel, purpose === p.id && styles.optionLabelSelected]}>
-                  {p.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-        <View style={styles.bottomActions}>
-          <Button title={t('onboarding.next')} onPress={() => setStep('level')} />
-        </View>
-      </View>
-    );
-  }
-
-  // Level selection
-  if (step === 'level') {
-    return (
-      <View style={styles.container}>
-        <ScrollView style={styles.stepScroll} contentContainerStyle={styles.stepScrollContent}>
-          <Text style={styles.stepTitle}>{t('onboarding.level')}</Text>
-          <View style={styles.levelGrid}>
-            {LEVELS.map((l) => (
-              <TouchableOpacity
-                key={l.id}
-                style={[styles.levelChip, level === l.id && styles.levelChipSelected]}
-                onPress={() => setLevel(l.id)}
-              >
-                <Text style={[styles.levelChipText, level === l.id && styles.levelChipTextSelected]}>
-                  {l.id === 0 ? t('onboarding.beginner') : `${l.label}${t('learn.grade')}`}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </ScrollView>
-        <View style={styles.bottomActions}>
-          <Button title={t('onboarding.next')} onPress={() => setStep('goal')} />
-        </View>
-      </View>
-    );
-  }
-
-  // Daily goal
-  if (step === 'goal') {
-    return (
-      <View style={styles.container}>
-        <View style={styles.stepContent}>
-          <Text style={styles.stepTitle}>{t('onboarding.goal')}</Text>
-          <View style={styles.goalGrid}>
-            {GOALS.map((g) => (
-              <TouchableOpacity
-                key={g.minutes}
-                style={[styles.goalCard, goalMinutes === g.minutes && styles.goalCardSelected]}
-                onPress={() => setGoalMinutes(g.minutes)}
-              >
-                <Text style={[styles.goalTime, goalMinutes === g.minutes && styles.goalTimeSelected]}>
-                  {g.label}{t('settings.min')}
-                </Text>
-                <Text style={styles.goalDesc}>{g.desc}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-        <View style={styles.bottomActions}>
-          <Button title={t('onboarding.next')} onPress={() => setStep('ready')} />
-        </View>
-      </View>
-    );
-  }
-
-  // Ready screen
+  // Step 3: Daily Kanji Count
   return (
     <View style={styles.container}>
-      <View style={styles.readyContent}>
-        <Text style={styles.readyEmoji}>🎉</Text>
-        <Text style={styles.readyTitle}>{t('onboarding.ready')}</Text>
-        <Text style={styles.readySubtitle}>
-          {t('onboarding.welcome')}, {name || ''}
+      <View style={styles.stepContent}>
+        <Text style={styles.stepTitle}>
+          {t('onboarding.slide3Title')}
         </Text>
-        <View style={styles.readySummary}>
-          <Text style={styles.summaryText}>📚 {level === 0 ? 1 : level}{t('learn.grade')} 부터</Text>
-          <Text style={styles.summaryText}>⏱️ {goalMinutes}{t('settings.min')}</Text>
-          <Text style={styles.summaryText}>🎯 {purpose ? PURPOSES.find((p) => p.id === purpose)?.label : ''}</Text>
+        <View style={styles.chipRow}>
+          {DAILY_OPTIONS.map((count) => {
+            const selected = dailyCount === count;
+            return (
+              <TouchableOpacity
+                key={count}
+                style={[styles.chip, selected && styles.chipSelected]}
+                onPress={() => setDailyCount(count)}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.chipText,
+                    selected && styles.chipTextSelected,
+                  ]}
+                >
+                  {count}{t('home.chars')}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
       <View style={styles.bottomActions}>
-        <Button title={t('onboarding.start')} onPress={completeOnboarding} />
+        <Button
+          title={t('onboarding.start')}
+          onPress={completeOnboarding}
+        />
       </View>
     </View>
   );
@@ -268,84 +167,99 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  // Slides
-  slide: {
+  // Intro
+  centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: spacing.xxl,
+    paddingHorizontal: spacing.xl,
   },
-  slideEmoji: { fontSize: 80, marginBottom: spacing.xl },
-  slideTitle: { ...typography.h1, color: colors.text, textAlign: 'center', marginBottom: spacing.md },
-  slideSubtitle: { ...typography.body, color: colors.textSecondary, textAlign: 'center', lineHeight: 26 },
-  dots: { flexDirection: 'row', justifyContent: 'center', gap: spacing.sm, marginBottom: spacing.lg },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.border },
-  dotActive: { backgroundColor: colors.primary, width: 24 },
+  introTitle: {
+    ...typography.h1,
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: spacing.md,
+  },
+  introSubtitle: {
+    ...typography.body,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 26,
+  },
   // Steps
-  stepContent: { flex: 1, padding: spacing.xl, paddingTop: spacing.xxxl },
-  stepTitle: { ...typography.h1, color: colors.text, marginBottom: spacing.xl },
-  bottomActions: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: 48, gap: spacing.md },
-  skipText: { ...typography.body, color: colors.textSecondary, textAlign: 'center' },
-  // Name
-  nameInput: {
+  stepContent: {
+    flex: 1,
+    padding: spacing.xl,
+    paddingTop: spacing.xxxl,
+  },
+  stepTitle: {
+    ...typography.h1,
+    color: colors.text,
+    marginBottom: spacing.xl,
+  },
+  bottomActions: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+    paddingBottom: 48,
+  },
+  // JLPT list
+  jlptList: {
+    gap: spacing.sm,
+  },
+  jlptRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 2,
+    borderColor: colors.border,
+  },
+  jlptRowSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + '0A',
+  },
+  jlptLabel: {
     ...typography.h2,
     color: colors.text,
-    borderBottomWidth: 2,
-    borderBottomColor: colors.primary,
-    paddingVertical: spacing.md,
+    width: 48,
   },
-  // Purpose
-  optionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
-  optionCard: {
-    width: '47%',
-    padding: spacing.lg,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 2,
-    borderColor: colors.border,
-    alignItems: 'center',
+  jlptLabelSelected: {
+    color: colors.primary,
   },
-  optionCardSelected: { borderColor: colors.primary, backgroundColor: '#FEF2F2' },
-  optionEmoji: { fontSize: 32, marginBottom: spacing.sm },
-  optionLabel: { ...typography.label, color: colors.text },
-  optionLabelSelected: { color: colors.primary },
-  // Level
-  stepScroll: { flex: 1 },
-  stepScrollContent: { padding: spacing.xl, paddingTop: spacing.xxxl },
-  levelGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  levelChip: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xl,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 2,
-    borderColor: colors.border,
-    minWidth: '45%',
-    alignItems: 'center',
-  },
-  levelChipSelected: { borderColor: colors.primary, backgroundColor: '#FEF2F2' },
-  levelChipText: { ...typography.label, color: colors.text },
-  levelChipTextSelected: { color: colors.primary },
-  // Goal
-  goalGrid: { flexDirection: 'row', gap: spacing.md },
-  goalCard: {
+  jlptDesc: {
+    ...typography.body,
+    color: colors.textSecondary,
     flex: 1,
-    padding: spacing.lg,
+  },
+  jlptDescSelected: {
+    color: colors.text,
+  },
+  // Daily chips
+  chipRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginTop: spacing.md,
+  },
+  chip: {
+    flex: 1,
+    paddingVertical: spacing.lg,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     borderWidth: 2,
     borderColor: colors.border,
     alignItems: 'center',
   },
-  goalCardSelected: { borderColor: colors.primary, backgroundColor: '#FEF2F2' },
-  goalTime: { ...typography.h2, color: colors.text },
-  goalTimeSelected: { color: colors.primary },
-  goalDesc: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs },
-  // Ready
-  readyContent: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl },
-  readyEmoji: { fontSize: 80, marginBottom: spacing.lg },
-  readyTitle: { ...typography.h1, color: colors.text, marginBottom: spacing.md },
-  readySubtitle: { ...typography.body, color: colors.textSecondary, textAlign: 'center', marginBottom: spacing.xl },
-  readySummary: { gap: spacing.sm },
-  summaryText: { ...typography.body, color: colors.text },
+  chipSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + '0A',
+  },
+  chipText: {
+    ...typography.label,
+    color: colors.text,
+  },
+  chipTextSelected: {
+    color: colors.primary,
+  },
 });

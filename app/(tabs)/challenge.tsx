@@ -9,39 +9,31 @@ import { GRADE_INFO } from '../../src/types/kanji';
 import { QUIZ_TYPE_INFO, QuizType } from '../../src/types/quiz';
 import { useI18n } from '../../src/i18n';
 
-// Challenge data is now generated dynamically with i18n in the component
+interface PracticeItem {
+  key: string;
+  labelKey: string;
+  descKey: string;
+  action: () => void;
+}
 
-const QUIZ_TYPES: { type: QuizType; free: boolean }[] = [
-  { type: 'kanji-to-reading', free: true },
-  { type: 'kanji-to-meaning', free: true },
-  { type: 'compound-reading', free: true },
-  { type: 'audio-to-kanji', free: true },
-  { type: 'reading-to-write', free: true },
-  { type: 'meaning-to-write', free: true },
-  { type: 'radical-match', free: true },
-  { type: 'stroke-count', free: true },
-  { type: 'antonym-synonym', free: true },
-  { type: 'sentence-completion', free: true },
-  { type: 'dictation', free: true },
-  { type: 'fill-in-blank', free: true },
-];
+interface PracticeSection {
+  titleKey: string;
+  items: PracticeItem[];
+}
 
 export default function ChallengeScreen() {
   const router = useRouter();
   const [selectedGrade, setSelectedGrade] = useState(1);
-  const { t, language } = useI18n();
+  const { t } = useI18n();
 
-  const CHALLENGES = [
-    { id: 'speed', emoji: '⚡', title: t('challenge.speedQuiz'), desc: t('challenge.speedDesc'), color: '#EF4444' },
-    { id: 'boss', emoji: '👹', title: t('challenge.bossBattle'), desc: t('challenge.bossDesc'), color: '#8B5CF6' },
-    { id: 'kanken', emoji: '📝', title: t('challenge.kankenMock'), desc: t('challenge.kankenDesc'), color: '#3B82F6' },
-  ];
+  function getKanjiIdsForGrade(grade: number): number[] {
+    const startId = GRADE_INFO.slice(0, grade - 1).reduce((sum, g) => sum + g.count, 0) + 1;
+    const count = GRADE_INFO[grade - 1].count;
+    return Array.from({ length: count }, (_, i) => startId + i);
+  }
 
-  function startQuiz(type: QuizType) {
-    const gradeInfo = GRADE_INFO[selectedGrade - 1];
-    const startId = GRADE_INFO.slice(0, selectedGrade - 1).reduce((sum, g) => sum + g.count, 0) + 1;
-    const ids = Array.from({ length: gradeInfo.count }, (_, i) => startId + i);
-
+  function navigateQuiz(type: QuizType) {
+    const ids = getKanjiIdsForGrade(selectedGrade);
     const writingTypes: QuizType[] = ['reading-to-write', 'meaning-to-write', 'dictation', 'fill-in-blank'];
     if (writingTypes.includes(type)) {
       router.push(`/write-quiz?type=${type}&kanjiIds=${JSON.stringify(ids)}`);
@@ -50,15 +42,96 @@ export default function ChallengeScreen() {
     }
   }
 
-  function startBoss() {
-    const gradeInfo = GRADE_INFO[selectedGrade - 1];
-    const startId = GRADE_INFO.slice(0, selectedGrade - 1).reduce((sum, g) => sum + g.count, 0) + 1;
-    const ids = Array.from({ length: gradeInfo.count }, (_, i) => startId + i);
-    // Boss battle rotates through reading quiz types
-    const bossTypes: QuizType[] = ['kanji-to-reading', 'kanji-to-meaning', 'compound-reading', 'radical-match'];
-    const randomType = bossTypes[Math.floor(Math.random() * bossTypes.length)];
-    router.push(`/quiz?type=${randomType}&kanjiIds=${JSON.stringify(ids)}`);
+  function navigateComprehensive() {
+    const ids = getKanjiIdsForGrade(selectedGrade);
+    const allTypes: QuizType[] = [
+      'kanji-to-reading', 'kanji-to-meaning', 'compound-reading',
+      'audio-to-kanji', 'reading-to-write', 'meaning-to-write',
+    ];
+    const randomType = allTypes[Math.floor(Math.random() * allTypes.length)];
+    const writingTypes: QuizType[] = ['reading-to-write', 'meaning-to-write', 'dictation', 'fill-in-blank'];
+    if (writingTypes.includes(randomType)) {
+      router.push(`/write-quiz?type=${randomType}&kanjiIds=${JSON.stringify(ids)}`);
+    } else {
+      router.push(`/quiz?type=${randomType}&kanjiIds=${JSON.stringify(ids)}`);
+    }
   }
+
+  const sections: PracticeSection[] = [
+    {
+      titleKey: 'challenge.readingPractice',
+      items: [
+        {
+          key: 'kanji-to-reading',
+          labelKey: 'challenge.kanjiToReading',
+          descKey: 'challenge.kanjiToReadingDesc',
+          action: () => navigateQuiz('kanji-to-reading'),
+        },
+        {
+          key: 'kanji-to-meaning',
+          labelKey: 'challenge.kanjiToMeaning',
+          descKey: 'challenge.kanjiToMeaningDesc',
+          action: () => navigateQuiz('kanji-to-meaning'),
+        },
+        {
+          key: 'compound-reading',
+          labelKey: 'challenge.compoundReading',
+          descKey: 'challenge.compoundReadingDesc',
+          action: () => navigateQuiz('compound-reading'),
+        },
+      ],
+    },
+    {
+      titleKey: 'challenge.writingPractice',
+      items: [
+        {
+          key: 'reading-to-write',
+          labelKey: 'challenge.readingToWrite',
+          descKey: 'challenge.readingToWriteDesc',
+          action: () => navigateQuiz('reading-to-write'),
+        },
+        {
+          key: 'meaning-to-write',
+          labelKey: 'challenge.meaningToWrite',
+          descKey: 'challenge.meaningToWriteDesc',
+          action: () => navigateQuiz('meaning-to-write'),
+        },
+      ],
+    },
+    {
+      titleKey: 'challenge.listeningPractice',
+      items: [
+        {
+          key: 'audio-to-kanji',
+          labelKey: 'challenge.audioToKanji',
+          descKey: 'challenge.audioToKanjiDesc',
+          action: () => navigateQuiz('audio-to-kanji'),
+        },
+      ],
+    },
+    {
+      titleKey: 'challenge.comprehensiveTest',
+      items: [
+        {
+          key: 'comprehensive-mixed',
+          labelKey: 'challenge.comprehensiveMixed',
+          descKey: 'challenge.comprehensiveMixedDesc',
+          action: () => navigateComprehensive(),
+        },
+      ],
+    },
+    {
+      titleKey: 'challenge.kankenMock',
+      items: [
+        {
+          key: 'kanken-by-level',
+          labelKey: 'challenge.kankenByLevel',
+          descKey: 'challenge.kankenByLevelDesc',
+          action: () => navigateQuiz('kanji-to-meaning'),
+        },
+      ],
+    },
+  ];
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -80,75 +153,61 @@ export default function ChallengeScreen() {
         ))}
       </View>
 
-      {/* Special challenges */}
-      {CHALLENGES.map((c) => (
-        <TouchableOpacity
-          key={c.id}
-          activeOpacity={0.7}
-          onPress={() => {
-            if (c.id === 'boss') startBoss();
-            else if (c.id === 'speed') startQuiz('kanji-to-reading');
-            else if (c.id === 'kanken') startQuiz('kanji-to-meaning');
-          }}
-        >
-          <Card style={styles.challengeCard}>
-            <View style={[styles.iconCircle, { backgroundColor: c.color }]}>
-              <Text style={styles.emoji}>{c.emoji}</Text>
-            </View>
-            <View style={styles.cardContent}>
-              <Text style={styles.cardTitle}>{c.title}</Text>
-              <Text style={styles.cardDesc}>{c.desc}</Text>
-            </View>
+      {/* Practice sections */}
+      {sections.map((section) => (
+        <View key={section.titleKey} style={styles.section}>
+          <Text style={styles.sectionTitle}>{t(section.titleKey)}</Text>
+          <Card style={styles.sectionCard}>
+            {section.items.map((item, index) => (
+              <TouchableOpacity
+                key={item.key}
+                style={[
+                  styles.practiceRow,
+                  index < section.items.length - 1 && styles.practiceRowBorder,
+                ]}
+                activeOpacity={0.6}
+                onPress={item.action}
+              >
+                <View style={styles.practiceRowContent}>
+                  <Text style={styles.practiceLabel}>{t(item.labelKey)}</Text>
+                  <Text style={styles.practiceDesc}>{t(item.descKey)}</Text>
+                </View>
+                <Text style={styles.arrow}>{'>'}</Text>
+              </TouchableOpacity>
+            ))}
           </Card>
-        </TouchableOpacity>
+        </View>
       ))}
-
-      {/* Quiz type selection */}
-      <Text style={styles.sectionTitle}>{t('challenge.quiz12')}</Text>
-      <View style={styles.quizGrid}>
-        {QUIZ_TYPES.map(({ type }) => {
-          const info = QUIZ_TYPE_INFO[type];
-          return (
-            <TouchableOpacity
-              key={type}
-              style={styles.quizTypeCard}
-              onPress={() => startQuiz(type)}
-            >
-              <Text style={styles.quizIcon}>{info.icon}</Text>
-              <Text style={styles.quizLabel} numberOfLines={1}>{language === 'ko' ? info.labelKo : info.labelJa}</Text>
-              <Text style={styles.quizCategory}>{info.category === 'reading' ? (language === 'ko' ? '읽기' : '読み') : info.category === 'writing' ? (language === 'ko' ? '쓰기' : '書き') : (language === 'ko' ? '지식' : '知識')}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xxxl },
+  content: { padding: spacing.lg, gap: spacing.sm, paddingBottom: spacing.xxxl },
   title: { ...typography.h1, color: colors.text },
-  subtitle: { ...typography.body, color: colors.textSecondary, marginBottom: spacing.sm },
+  subtitle: { ...typography.body, color: colors.textSecondary, marginBottom: spacing.xs },
   gradeSelector: { flexDirection: 'row', gap: spacing.xs, marginBottom: spacing.sm },
   gradeTab: {
     flex: 1, paddingVertical: spacing.sm, borderRadius: radius.md,
     alignItems: 'center', backgroundColor: colors.surface, ...shadow.sm,
   },
   gradeTabText: { ...typography.label, color: colors.textSecondary },
-  challengeCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  iconCircle: { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center' },
-  emoji: { fontSize: 24 },
-  cardContent: { flex: 1 },
-  cardTitle: { ...typography.h3, color: colors.text },
-  cardDesc: { ...typography.bodySmall, color: colors.textSecondary },
-  sectionTitle: { ...typography.h2, color: colors.text, marginTop: spacing.md },
-  quizGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  quizTypeCard: {
-    width: '31%', backgroundColor: colors.surface, borderRadius: radius.md,
-    padding: spacing.md, alignItems: 'center', ...shadow.sm,
+  section: { gap: spacing.xs },
+  sectionTitle: { ...typography.h3, color: colors.text, fontWeight: '700' },
+  sectionCard: { padding: 0, overflow: 'hidden' },
+  practiceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
-  quizIcon: { fontSize: 28, marginBottom: spacing.xs },
-  quizLabel: { ...typography.caption, color: colors.text, fontWeight: '600', textAlign: 'center' },
-  quizCategory: { ...typography.caption, color: colors.textLight, fontSize: 10, marginTop: 2 },
+  practiceRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  practiceRowContent: { flex: 1 },
+  practiceLabel: { ...typography.body, color: colors.text, fontWeight: '600' },
+  practiceDesc: { ...typography.caption, color: colors.textSecondary, marginTop: 2 },
+  arrow: { ...typography.body, color: colors.textLight, fontSize: 18, marginLeft: spacing.sm },
 });

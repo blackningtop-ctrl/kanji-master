@@ -81,29 +81,36 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Profile header */}
-      <View style={styles.profileHeader}>
-        <View style={styles.avatarCircle}>
-          <Text style={styles.avatarEmoji}>👤</Text>
-        </View>
-        <View style={styles.profileInfo}>
-          <Text style={styles.levelBadge}>Lv.{level.level} {level.title}</Text>
-          <ProgressBar
-            progress={level.xpForNext > 0 ? level.xp / level.xpForNext : 0}
-            color={colors.accent}
-            height={6}
-            showLabel
-            label={`${level.xp} / ${level.xpForNext} XP`}
-          />
-        </View>
+      {/* Profile header — level + XP bar */}
+      <View style={styles.header}>
+        <Text style={styles.levelText}>{level.title} · Lv.{level.level}</Text>
+        <ProgressBar
+          progress={level.xpForNext > 0 ? level.xp / level.xpForNext : 0}
+          color={colors.accent}
+          height={6}
+          showLabel
+          label={`${level.xp} / ${level.xpForNext} ${t('challenge.studyPoints')}`}
+        />
       </View>
 
-      {/* Quick stats */}
+      {/* Quick stats — 4 text cards, no emojis */}
       <View style={styles.quickStats}>
-        <QuickStat label={t('profile.streak')} value={`${streakDays}${t('home.days')}`} emoji="🔥" />
-        <QuickStat label={t('profile.master')} value={`${totalMastered}${t('home.chars')}`} emoji="⭐" />
-        <QuickStat label={t('profile.accuracy')} value={`${accuracy}%`} emoji="🎯" />
-        <QuickStat label={t('profile.reviewCount')} value={`${totalReviews}`} emoji="📊" />
+        <View style={styles.statCard}>
+          <Text style={styles.statValue}>{streakDays}{t('home.days')}</Text>
+          <Text style={styles.statLabel}>{t('profile.streak')}</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statValue}>{totalMastered}{t('home.chars')}</Text>
+          <Text style={styles.statLabel}>{t('profile.master')}</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statValue}>{accuracy}%</Text>
+          <Text style={styles.statLabel}>{t('profile.accuracy')}</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statValue}>{totalReviews}</Text>
+          <Text style={styles.statLabel}>{t('profile.reviewCount')}</Text>
+        </View>
       </View>
 
       {/* Grade progress */}
@@ -111,7 +118,7 @@ export default function ProfileScreen() {
         <Text style={styles.sectionTitle}>{t('profile.gradeMastery')}</Text>
         {collectionStats.map((s, i) => (
           <View key={s.grade} style={styles.gradeRow}>
-            <Text style={styles.gradeLabel}>{s.grade}{t('learn.grade')}</Text>
+            <Text style={styles.gradeLabel}>{GRADE_INFO[i]?.label ?? `${s.grade}${t('learn.grade')}`}</Text>
             <ProgressBar
               progress={s.total > 0 ? s.mastered / s.total : 0}
               color={GRADE_INFO[i]?.color ?? colors.primary}
@@ -129,23 +136,26 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </Card>
 
-      {/* Badges */}
+      {/* Milestones — text list */}
       <Card>
-        <Text style={styles.sectionTitle}>{t('profile.badges')}</Text>
-        <View style={styles.badgeGrid}>
-          {ALL_BADGES.map((badge) => {
-            const unlocked = badges.some((b) => b.id === badge.id);
-            return (
-              <View key={badge.id} style={[styles.badgeItem, !unlocked && styles.badgeLocked]}>
-                <Text style={styles.badgeIcon}>{badge.icon}</Text>
-                <Text style={styles.badgeName} numberOfLines={1}>{language === 'ko' ? badge.nameKo : badge.nameJa}</Text>
-              </View>
-            );
-          })}
-        </View>
+        <Text style={styles.sectionTitle}>{t('profile.milestones')}</Text>
+        {ALL_BADGES.map((badge) => {
+          const unlocked = badges.some((b) => b.id === badge.id);
+          const badgeName = language === 'ko' ? badge.nameKo : badge.nameJa;
+          return (
+            <View key={badge.id} style={styles.milestoneRow}>
+              <Text style={[styles.milestoneStatus, !unlocked && styles.milestoneLocked]}>
+                {unlocked ? '\u2713' : '\u2014'}
+              </Text>
+              <Text style={[styles.milestoneName, !unlocked && styles.milestoneNameLocked]}>
+                {badgeName}{!unlocked ? ` (${language === 'ko' ? '\uBBF8\uB2EC\uC131' : '\u672A\u9054\u6210'})` : ''}
+              </Text>
+            </View>
+          );
+        })}
       </Card>
 
-      {/* Weak kanji */}
+      {/* Weak kanji — neutral styling */}
       {weakKanji.length > 0 && (
         <Card>
           <Text style={styles.sectionTitle}>{t('profile.weakKanji')}</Text>
@@ -157,7 +167,7 @@ export default function ProfileScreen() {
                 onPress={() => router.push(`/kanji/${k.kanjiId}`)}
               >
                 <Text style={styles.weakKanji}>{k.character}</Text>
-                <Text style={styles.weakCount}>✕{k.errorCount}</Text>
+                <Text style={styles.weakCount}>{k.errorCount}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -166,68 +176,73 @@ export default function ProfileScreen() {
 
       {/* Navigation links */}
       <Card>
-        <TouchableOpacity style={styles.settingRow} onPress={() => router.push('/radical')}>
-          <Text style={styles.settingLabel}>📚 {t('profile.radicals')}</Text>
+        <TouchableOpacity style={styles.navRow} onPress={() => router.push('/radical')}>
+          <Text style={styles.navLabel}>{t('profile.radicals')}</Text>
+          <Text style={styles.navArrow}>{'>'}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.settingRow, { borderBottomWidth: 0 }]} onPress={() => router.push('/settings')}>
-          <Text style={styles.settingLabel}>⚙️ {t('profile.settings')}</Text>
+        <TouchableOpacity style={[styles.navRow, styles.navRowLast]} onPress={() => router.push('/settings')}>
+          <Text style={styles.navLabel}>{t('profile.settings')}</Text>
+          <Text style={styles.navArrow}>{'>'}</Text>
         </TouchableOpacity>
       </Card>
     </ScrollView>
   );
 }
 
-function QuickStat({ label, value, emoji }: { label: string; value: string; emoji: string }) {
-  return (
-    <View style={styles.statCard}>
-      <Text style={styles.statEmoji}>{emoji}</Text>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
-
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxxl },
-  profileHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
-  avatarCircle: {
-    width: 64, height: 64, borderRadius: 32, backgroundColor: colors.surface,
-    alignItems: 'center', justifyContent: 'center', ...shadow.md,
-  },
-  avatarEmoji: { fontSize: 32 },
-  profileInfo: { flex: 1 },
-  levelBadge: { ...typography.h3, color: colors.accent, marginBottom: spacing.sm },
+
+  // Header
+  header: { gap: spacing.sm },
+  levelText: { ...typography.h2, color: colors.text },
+
+  // Quick stats
   quickStats: { flexDirection: 'row', gap: spacing.sm },
   statCard: {
     flex: 1, backgroundColor: colors.surface, borderRadius: radius.md,
     padding: spacing.md, alignItems: 'center', ...shadow.sm,
   },
-  statEmoji: { fontSize: 20, marginBottom: spacing.xs },
   statValue: { ...typography.h3, color: colors.text },
   statLabel: { ...typography.caption, color: colors.textSecondary, marginTop: 2 },
+
+  // Sections
   sectionTitle: { ...typography.h3, color: colors.text, marginBottom: spacing.md },
+
+  // Grade progress
   gradeRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.xs },
-  gradeLabel: { ...typography.label, color: colors.text, width: 50 },
+  gradeLabel: { ...typography.caption, color: colors.text, width: 90 },
   gradeCount: { ...typography.caption, color: colors.textSecondary, width: 55, textAlign: 'right' },
   collectionLink: { marginTop: spacing.md, alignItems: 'center' },
   collectionLinkText: { ...typography.label, color: colors.primary },
-  badgeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  badgeItem: {
-    width: '22%', alignItems: 'center', padding: spacing.sm,
-    backgroundColor: colors.surface, borderRadius: radius.md, ...shadow.sm,
+
+  // Milestones
+  milestoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+    gap: spacing.sm,
   },
-  badgeLocked: { opacity: 0.3 },
-  badgeIcon: { fontSize: 24 },
-  badgeName: { ...typography.caption, color: colors.textSecondary, marginTop: 2, textAlign: 'center' },
+  milestoneStatus: { ...typography.body, color: colors.text, fontWeight: '700', width: 20, textAlign: 'center' },
+  milestoneLocked: { color: colors.textLight },
+  milestoneName: { ...typography.body, color: colors.text, flex: 1 },
+  milestoneNameLocked: { color: colors.textSecondary },
+
+  // Weak kanji — neutral colors
   weakGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   weakCell: {
-    width: 50, height: 60, backgroundColor: '#FEE2E2', borderRadius: radius.sm,
-    alignItems: 'center', justifyContent: 'center',
+    width: 50, height: 60, backgroundColor: colors.surface, borderRadius: radius.sm,
+    alignItems: 'center', justifyContent: 'center', ...shadow.sm,
   },
-  weakKanji: { fontFamily: 'NotoSerifJP', fontSize: 22, color: colors.error },
-  weakCount: { ...typography.caption, color: colors.error, fontSize: 10 },
-  settingRow: { paddingVertical: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
-  settingLabel: { ...typography.body, color: colors.text },
+  weakKanji: { fontFamily: 'NotoSerifJP', fontSize: 22, color: colors.text },
+  weakCount: { ...typography.caption, color: colors.textSecondary, fontSize: 10 },
+
+  // Navigation links
+  navRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingVertical: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border,
+  },
+  navRowLast: { borderBottomWidth: 0 },
+  navLabel: { ...typography.body, color: colors.text },
+  navArrow: { ...typography.body, color: colors.textLight, fontSize: 18 },
 });
