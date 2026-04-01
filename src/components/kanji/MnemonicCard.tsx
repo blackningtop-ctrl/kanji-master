@@ -5,7 +5,8 @@ import { typography } from '../../theme/typography';
 import { spacing, radius } from '../../theme/spacing';
 import { Card } from '../ui/Card';
 import { db, schema } from '../../db/client';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
+import { useI18n } from '../../i18n';
 
 interface MnemonicCardProps {
   kanjiId: number;
@@ -19,15 +20,10 @@ interface Mnemonic {
   isDefault: boolean;
 }
 
-const LANG_LABELS: Record<string, string> = {
-  ja: '🇯🇵 日本語',
-  ko: '🇰🇷 한국어',
-  en: '🇬🇧 English',
-};
-
 export function MnemonicCard({ kanjiId, character }: MnemonicCardProps) {
+  const { t, language } = useI18n();
   const [mnemonics, setMnemonics] = useState<Mnemonic[]>([]);
-  const [selectedLang, setSelectedLang] = useState('ja');
+  const [selectedLang, setSelectedLang] = useState(language === 'ko' ? 'ko' : 'ja');
   const [isEditing, setIsEditing] = useState(false);
   const [customText, setCustomText] = useState('');
   const [hasCustom, setHasCustom] = useState(false);
@@ -49,7 +45,6 @@ export function MnemonicCard({ kanjiId, character }: MnemonicCardProps) {
       isDefault: r.isDefault,
     })));
 
-    // Check for custom mnemonic
     const custom = rows.find((r: any) => !r.isDefault);
     if (custom) {
       setHasCustom(true);
@@ -87,10 +82,16 @@ export function MnemonicCard({ kanjiId, character }: MnemonicCardProps) {
     loadMnemonics();
   }
 
+  const labels = {
+    ko: { title: '기억법', default: '기본', custom: '커스텀', empty: '이 언어의 기억법이 아직 없습니다', placeholder: `「${character}」의 기억법을 써 보세요...`, add: '➕ 나만의 기억법 추가', edit: '✏️ 커스텀 수정', cancel: '취소', save: '저장' },
+    ja: { title: '覚え方', default: 'デフォルト', custom: 'カスタム', empty: 'この言語のニモニックはまだありません', placeholder: `「${character}」の覚え方を書いてみよう...`, add: '➕ 自分の覚え方を追加', edit: '✏️ カスタム編集', cancel: 'キャンセル', save: '保存' },
+  };
+  const l = labels[language] ?? labels.ko;
+
   return (
     <Card>
       <View style={styles.header}>
-        <Text style={styles.title}>覚え方</Text>
+        <Text style={styles.title}>{l.title}</Text>
         <View style={styles.langTabs}>
           {['ja', 'ko', 'en'].map((lang) => (
             <TouchableOpacity
@@ -106,52 +107,47 @@ export function MnemonicCard({ kanjiId, character }: MnemonicCardProps) {
         </View>
       </View>
 
-      {/* Default mnemonic */}
       {currentMnemonic ? (
         <View style={styles.storyBox}>
           <Text style={styles.storyText}>{currentMnemonic.story}</Text>
-          <Text style={styles.storyLabel}>デフォルト</Text>
+          <Text style={styles.storyLabel}>{l.default}</Text>
         </View>
       ) : (
-        <Text style={styles.emptyText}>
-          この言語のニモニックはまだありません
-        </Text>
+        <Text style={styles.emptyText}>{l.empty}</Text>
       )}
 
-      {/* Custom mnemonic */}
       {isEditing ? (
         <View style={styles.editBox}>
           <TextInput
             style={styles.editInput}
             value={customText}
             onChangeText={setCustomText}
-            placeholder={`「${character}」の覚え方を書いてみよう...`}
+            placeholder={l.placeholder}
             placeholderTextColor={colors.textLight}
             multiline
             maxLength={200}
           />
           <View style={styles.editActions}>
             <TouchableOpacity onPress={() => setIsEditing(false)}>
-              <Text style={styles.cancelText}>キャンセル</Text>
+              <Text style={styles.cancelText}>{l.cancel}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.saveButton} onPress={saveCustomMnemonic}>
-              <Text style={styles.saveText}>保存</Text>
+              <Text style={styles.saveText}>{l.save}</Text>
             </TouchableOpacity>
           </View>
         </View>
       ) : (
         <TouchableOpacity style={styles.addButton} onPress={() => setIsEditing(true)}>
           <Text style={styles.addButtonText}>
-            {hasCustom ? '✏️ カスタム編集' : '➕ 自分の覚え方を追加'}
+            {hasCustom ? l.edit : l.add}
           </Text>
         </TouchableOpacity>
       )}
 
-      {/* Show custom if exists */}
       {hasCustom && !isEditing && (
         <View style={[styles.storyBox, styles.customBox]}>
           <Text style={styles.storyText}>{customText}</Text>
-          <Text style={styles.storyLabel}>カスタム</Text>
+          <Text style={styles.storyLabel}>{l.custom}</Text>
         </View>
       )}
     </Card>

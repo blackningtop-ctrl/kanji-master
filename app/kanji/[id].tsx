@@ -187,7 +187,7 @@ export default function KanjiDetailScreen() {
             <Text style={styles.sectionTitle}>{t('kanji.radical')}</Text>
             <View style={styles.radicalRow}>
               <Text style={styles.radicalChar}>{radicalChar}</Text>
-              <Text style={styles.radicalHint}>タップして部首の詳細を見る →</Text>
+              <Text style={styles.radicalHint}>{t('radical.title')} →</Text>
             </View>
           </Card>
         </TouchableOpacity>

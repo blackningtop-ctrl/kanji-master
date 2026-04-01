@@ -251,7 +251,7 @@ export default function OnboardingScreen() {
           {t('onboarding.welcome')}, {name || ''}
         </Text>
         <View style={styles.readySummary}>
-          <Text style={styles.summaryText}>📚 {level === 0 ? 1 : level}{t('learn.grade')} start</Text>
+          <Text style={styles.summaryText}>📚 {level === 0 ? 1 : level}{t('learn.grade')} 부터</Text>
           <Text style={styles.summaryText}>⏱️ {goalMinutes}{t('settings.min')}</Text>
           <Text style={styles.summaryText}>🎯 {purpose ? PURPOSES.find((p) => p.id === purpose)?.label : ''}</Text>
         </View>

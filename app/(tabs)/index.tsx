@@ -77,8 +77,8 @@ export default function HomeScreen() {
             style={styles.gradeRow}
             onPress={() => router.push(`/(tabs)/learn?grade=${g.grade}`)}
           >
-            <Text style={styles.gradeLabel}>{g.label}</Text>
-            <Text style={styles.gradeCount}>{g.count}字</Text>
+            <Text style={styles.gradeLabel}>{g.grade}{t('learn.grade')}</Text>
+            <Text style={styles.gradeCount}>{g.count}{t('home.chars')}</Text>
             <ProgressBar
               progress={0}
               color={g.color}
