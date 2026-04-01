@@ -57,6 +57,7 @@ export default function KanjiDetailScreen() {
   const [mnemonic, setMnemonic] = useState<string>('');
   const [strokePaths, setStrokePaths] = useState<string[]>([]);
   const [radicalChar, setRadicalChar] = useState<string>('');
+  const [isAdded, setIsAdded] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -217,12 +218,13 @@ export default function KanjiDetailScreen() {
 
       {/* 학습 시작 버튼 */}
       <Button
-        title={t('kanji.startLearn')}
+        title={isAdded ? `✓ ${t('kanji.alreadyLearning')}` : t('kanji.startLearn')}
         onPress={async () => {
+          if (isAdded) return;
           await addKanjiToStudy(kanji.id);
-          router.back();
+          setIsAdded(true);
         }}
-        style={styles.studyButton}
+        style={[styles.studyButton, isAdded && { backgroundColor: colors.success, opacity: 0.8 }]}
       />
     </ScrollView>
   );
