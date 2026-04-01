@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions,
-  FlatList, TextInput,
+  FlatList, TextInput, ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '../src/theme/colors';
@@ -153,9 +153,6 @@ export default function OnboardingScreen() {
         </View>
         <View style={styles.bottomActions}>
           <Button title={t('onboarding.next')} onPress={() => setStep('purpose')} />
-          <TouchableOpacity onPress={() => setStep('purpose')}>
-            <Text style={styles.skipText}>{t('onboarding.next')}</Text>
-          </TouchableOpacity>
         </View>
       </View>
     );
@@ -193,21 +190,22 @@ export default function OnboardingScreen() {
   if (step === 'level') {
     return (
       <View style={styles.container}>
-        <View style={styles.stepContent}>
+        <ScrollView style={styles.stepScroll} contentContainerStyle={styles.stepScrollContent}>
           <Text style={styles.stepTitle}>{t('onboarding.level')}</Text>
-          {LEVELS.map((l) => (
-            <TouchableOpacity
-              key={l.id}
-              style={[styles.levelRow, level === l.id && styles.levelRowSelected]}
-              onPress={() => setLevel(l.id)}
-            >
-              <Text style={[styles.levelLabel, level === l.id && styles.levelLabelSelected]}>
-                {l.label}
-              </Text>
-              <Text style={styles.levelDesc}>{l.desc}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+          <View style={styles.levelGrid}>
+            {LEVELS.map((l) => (
+              <TouchableOpacity
+                key={l.id}
+                style={[styles.levelChip, level === l.id && styles.levelChipSelected]}
+                onPress={() => setLevel(l.id)}
+              >
+                <Text style={[styles.levelChipText, level === l.id && styles.levelChipTextSelected]}>
+                  {l.id === 0 ? t('onboarding.beginner') : `${l.label}${t('learn.grade')}`}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
         <View style={styles.bottomActions}>
           <Button title={t('onboarding.next')} onPress={() => setStep('goal')} />
         </View>
@@ -312,18 +310,22 @@ const styles = StyleSheet.create({
   optionLabel: { ...typography.label, color: colors.text },
   optionLabelSelected: { color: colors.primary },
   // Level
-  levelRow: {
-    padding: spacing.lg,
+  stepScroll: { flex: 1 },
+  stepScrollContent: { padding: spacing.xl, paddingTop: spacing.xxxl },
+  levelGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  levelChip: {
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xl,
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     borderWidth: 2,
     borderColor: colors.border,
-    marginBottom: spacing.sm,
+    minWidth: '45%',
+    alignItems: 'center',
   },
-  levelRowSelected: { borderColor: colors.primary, backgroundColor: '#FEF2F2' },
-  levelLabel: { ...typography.label, color: colors.text },
-  levelLabelSelected: { color: colors.primary },
-  levelDesc: { ...typography.caption, color: colors.textSecondary, marginTop: 2 },
+  levelChipSelected: { borderColor: colors.primary, backgroundColor: '#FEF2F2' },
+  levelChipText: { ...typography.label, color: colors.text },
+  levelChipTextSelected: { color: colors.primary },
   // Goal
   goalGrid: { flexDirection: 'row', gap: spacing.md },
   goalCard: {
